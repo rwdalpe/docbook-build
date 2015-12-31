@@ -347,12 +347,15 @@ task buildSingleHtml(dependsOn: prepareOlinkTargets) {
 				"-poutput.dir=${bookOutputDir.absolutePath}/",
 				"-pNOW=${buildTime}",
 				"-pbook-name=${topLevelBook}",
-				"-ptarget.database.document=${rootDir.absolutePath}/${srcHtmlLinkingSitemap}",
 				"-pcurrent.docid=${topLevelBook}",
 				"${lib}/${libXslt2Stylesheets}/xslt/base/pipelines/docbook.xpl",
 				"html-initial-stylesheet=${initialStylesheet.absolutePath}",
 				"preprocess-params-file=${preprocessParamsFile.absolutePath}"
 			]
+			
+			if(project.hasProperty("srcHtmlLinkingSitemap")) {
+				saxonArgs = saxonArgs.plus(4, "-ptarget.database.document=${rootDir.absolutePath}/${srcHtmlLinkingSitemap}")
+			}
 			
 			if(useGlossaryCollection) {
 				calabashArgs = calabashArgs.plus(4, "-pglossary.collection=urn:x-docbookbuild:glossary")
@@ -437,9 +440,12 @@ task buildEpub(dependsOn: prepareOlinkTargets) {
 				"draft.mode=${draft}",
 				"html.stylesheet=${relativeSrcDir}/${srcEpubCssFileDir}/${srcEpubCssFile}",
 				"NOW=${buildTime}",
-				"book-name=${topLevelBook}",
-				"target.database.document=${rootDir.absolutePath}/${srcEpubLinkingSitemap}"
+				"book-name=${topLevelBook}"
 			]
+			
+			if(project.hasProperty("srcEpubLinkingSitemap")) {
+				saxonArgs = saxonArgs.plus("target.database.document=${rootDir.absolutePath}/${srcEpubLinkingSitemap}")
+			}
 			
 			if(useGlossaryCollection) {
 				saxonArgs = saxonArgs.plus("glossary.collection=urn:x-docbookbuild:glossary")
