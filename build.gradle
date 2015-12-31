@@ -50,7 +50,6 @@ if(useGlossaryCollection)
 	relativeGlossaryCollectionFile = "${rootDir.absolutePath}/${srcGlossaryCollection}"
 }
 
-println srcCatalog
 def relativeCatalogFile = "${rootDir.absolutePath}/${srcCatalog}"
 
 task clean(type: Delete) {
@@ -322,8 +321,8 @@ task buildSingleHtml(dependsOn: prepareOlinkTargets) {
 	def topLevelBooks = srcToplevelBooks.tokenize(",")
 	
 	def initialStylesheet = file("${lib}/html-single-customizations.xsl")
-	if(project.hasProperty("singleHtmlCustomizationSytlesheet")) {
-		initialStylesheet = file("${rootDir.absolutePath}/${singleHtmlCustomizationSytlesheet}")
+	if(project.hasProperty("singleHtmlCustomizationStylesheet")) {
+		initialStylesheet = file("${rootDir.absolutePath}/${singleHtmlCustomizationStylesheet}")
 	}
 	
 	def preprocessParamsFile = file("${lib}/preprocess-params.xsl")
@@ -407,9 +406,9 @@ task buildEpub(dependsOn: prepareOlinkTargets) {
 	def topLevelBooks = srcToplevelBooks.tokenize(",")
 	
 	def customizationStylesheet = "${lib}/epub-customizations.xsl"
-	if(project.hasProperty("epubCustomizationSytlesheet"))
+	if(project.hasProperty("epubCustomizationStylesheet"))
 	{
-		customizationStylesheet = "${rootDir.absolutePath}/${epubCustomizationSytlesheet}"
+		customizationStylesheet = "${rootDir.absolutePath}/${epubCustomizationStylesheet}"
 	}
 	
 	doFirst {
@@ -489,7 +488,9 @@ task buildEpub(dependsOn: prepareOlinkTargets) {
 				into "${bookOutputDir}/OEBPS/images"
 			}
 			
-			ant.zip(basedir: bookOutputDir, destfile: "${bookOutputDir}/${systemName}-${topLevelBook}.epub", excludes: "*.epub", compress: true)
+			def epubPrefix = project.hasProperty("epubPrefix") ? epubPrefix : ""
+			
+			ant.zip(basedir: bookOutputDir, destfile: "${bookOutputDir}/${epubPrefix}${topLevelBook}.epub", excludes: "*.epub", compress: true)
 		}
 	} 
 }
@@ -500,9 +501,9 @@ task buildPdf(dependsOn: prepareOlinkTargets) {
 	def topLevelBooks = srcToplevelBooks.tokenize(",")
 	
 	def customizationStylesheet = "${lib}/fo-customizations.xsl"
-	if(project.hasProperty("epubCustomizationSytlesheet"))
+	if(project.hasProperty("pdfCustomizationStylesheet"))
 	{
-		customizationStylesheet = "${rootDir.absolutePath}/${epubCustomizationSytlesheet}"
+		customizationStylesheet = "${rootDir.absolutePath}/${pdfCustomizationStylesheet}"
 	}
 	
 	doFirst {
@@ -555,10 +556,12 @@ task buildPdf(dependsOn: prepareOlinkTargets) {
 				}
 			}
 			
+			def pdfPrefix = project.hasProperty("pdfPrefix") ? pdfPrefix : ""
+			
 			javaexec {
 				main = "org.apache.fop.cli.Main"
 				classpath = fopClasspath
-				args = "-fo ${bookFoOutputDir}/${topLevelBook}.fo -pdf ${bookPdfOutputDir}/${systemName}-${topLevelBook}_basic.pdf".split().toList()
+				args = "-fo ${bookFoOutputDir}/${topLevelBook}.fo -pdf ${bookPdfOutputDir}/${pdfPrefix}${topLevelBook}_basic.pdf".split().toList()
 			}
 		}
 	} 
