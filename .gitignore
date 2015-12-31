@@ -11,7 +11,7 @@ lib/fop-1.1
 lib/docbook-*rwdalpe*
 lib/docbook-xsl-java*
 lib/tools/*calabash*
-lib/asciidoctor*
+lib/asciidoctorj*
 lib/jing*
 lib/xmlcalabash*
 lib/prepared_catalog.xml
