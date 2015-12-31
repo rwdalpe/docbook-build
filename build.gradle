@@ -1,0 +1,567 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	
+	dependencies {
+		classpath 'commons-io:commons-io:2.4'
+	}
+}
+
+configurations {
+	build
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://maven.restlet.com/" }
+	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+dependencies {
+	build 'net.sf.saxon:Saxon-HE:9.6.0-7'
+	// travis-ci gradle builds seemt o have trouble with this, so we're doing manual dependency
+	// handling for now, hopefully we get to uncomment this in the future
+	// build 'com.xmlcalabash:xmlcalabash:1.1.9-96'
+	build 'org.asciidoctor:asciidoctorj:1.5.3.2'
+	build 'org.apache.xmlgraphics:fop:2.0'
+}
+
+def formatter = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+formatter.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+def buildTime = formatter.format(new Date())[0..-3] + ":00"
+
+def asciidoctorjClasspath = fileTree(lib).include(["gradle/asciidoctorj/*.jar"])
+
+def xslt2Classpath = fileTree(lib).include(["${libXmlCalabash}/**/*.jar", "${libXslt2StylesheetsExtensions}/*.jar", "${libXslt2StylesheetsExtensions}"])
+
+def xslt1Classpath = fileTree(lib).include(["${libJing}/bin/*.jar"])
+
+def fopClasspath = fileTree(lib).include(["gradle/fop/*.jar"])
+
+def relativeOutputDir = "${rootDir.absolutePath}/${outputDir}"
+def relativeSrcDir = "${rootDir.absolutePath}/${src}"
+
+def useGlossaryCollection = project.hasProperty("srcGlossaryCollection")
+def relativeGlossaryCollectionFile = null
+if(useGlossaryCollection)
+{
+	relativeGlossaryCollectionFile = "${rootDir.absolutePath}/${srcGlossaryCollection}"
+}
+
+println srcCatalog
+def relativeCatalogFile = "${rootDir.absolutePath}/${srcCatalog}"
+
+task clean(type: Delete) {
+	doFirst{
+		delete relativeOutputDir
+	}
+}
+
+task cleanLibs(type: Delete) {
+	doFirst {
+		delete "${lib}/gradle", 
+				"${lib}/${libJing}", "${lib}/${libJingZip}", 
+				"${lib}/${libXslt2Stylesheets}", "${lib}/${libXslt2StylesheetsZip}",
+				"${lib}/${libXslt2StylesheetsExtensions}", "${lib}/${libXslt2StylesheetsExtensionsZip}",
+				"${lib}/${libXslt2StylesheetsRpgExtensions}", "${lib}/${libXslt2StylesheetsRpgExtensionsZip}",
+				"${lib}/${libXslt1StylesheetsRpgExtensions}", "${lib}/${libXslt1StylesheetsRpgExtensionsZip}",
+				"${lib}/${libDocbookRpgExtensions}", "${lib}/${libDocbookRpgExtensionsZip}",
+				"${lib}/${libXmlCalabash}", "${lib}/${libXmlCalabashZip}"
+	}
+}
+
+task cleanValidation(type: Delete) {
+	doFirst {
+		delete "${relativeOutputDir}/${outputDirValidation}"
+	}
+}
+
+task cleanDocbook(type: Delete) {
+	doFirst {
+		delete "${relativeOutputDir}/${outputDirDocbook}"
+	}
+}
+
+task cleanPdf(type: Delete) {
+	doFirst {
+		delete "${relativeOutputDir}/${outputDirFo}", "${relativeOutputDir}/${outputDirPdf}"
+	}
+}
+
+task cleanHtmlSingle(type: Delete) {
+	doFirst {
+		delete "${relativeOutputDir}/${outputDirHtml}/${outputdirHtmlSingle}"
+	}
+}
+
+task cleanEpub(type: Delete) {
+	doFirst {
+		delete "${relativeOutputDir}/${outputDirEpub}"
+	}
+}
+
+task copyLibs() {
+	configurations.build.resolvedConfiguration.firstLevelModuleDependencies.each { dep ->
+		def f = new File("${lib}/gradle", dep.moduleName)
+		dep.allModuleArtifacts.each { artifact ->
+			copy {
+				from artifact.getFile()
+				into f
+			}
+		}
+	}
+}
+
+task getLibs(dependsOn: copyLibs) {
+	def libdir = new File(lib)
+	
+	if(!libdir.exists()) {
+		libdir.mkdir()
+	}
+	
+	doFirst {
+		ant.get(dest: "${lib}", src: "${libJingUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}", src: "${lib}/${libJingZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libXmlCalabashUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}", src: "${lib}/${libXmlCalabashZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libXslt2StylesheetsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}", src: "${lib}/${libXslt2StylesheetsZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}", src: "${lib}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}/${libDocbookRpgExtensions}", src: "${lib}/${libDocbookRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}/${libXslt2StylesheetsRpgExtensions}", src: "${lib}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: "${lib}", src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}/${libXslt1StylesheetsRpgExtensions}", src: "${lib}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
+	}
+}
+
+task prepareCatalog() {
+	def libBaseUrl = file("${lib}")
+	def commonCatalogBaseUrl = file("${relativeOutputDir}/${outputDirDocbook}/common")
+	def sitemapCatalogBaseUrl = file("${relativeOutputDir}/${outputDirDocbook}/sitemap")
+	
+	doFirst {
+		if(!commonCatalogBaseUrl.exists() || !!sitemapCatalogBaseUrl.exists())
+		{
+			commonCatalogBaseUrl.mkdirs()
+			sitemapCatalogBaseUrl.mkdirs()
+		}
+		
+		ant.xslt(style: "${lib}/prepare_catalog.xsl", in: relativeCatalogFile, out: "${lib}/prepared_catalog.xml", force: true, classpath: xslt2Classpath.asPath) {
+			factory(name: "net.sf.saxon.TransformerFactoryImpl")
+			param(name: "docbook-catalog-baseurl", expression: (libBaseUrl.absolutePath + "/"))
+			param(name: "common-catalog-baseurl", expression: (commonCatalogBaseUrl.absolutePath + "/"))
+			param(name: "sitemap-catalog-baseurl", expression: (sitemapCatalogBaseUrl.absolutePath + "/"))
+		} 
+	}
+}
+
+task prepareGlossary() {
+	def commonOutputDir = file("${relativeOutputDir}/${outputDirDocbook}/common")
+
+	doFirst {
+		if(useGlossaryCollection)
+		{
+			if(!commonOutputDir.exists())
+			{
+				commonOutputDir.mkdirs()
+			}
+			
+			javaexec {
+				main = "org.asciidoctor.cli.AsciidoctorInvoker"
+				classpath = asciidoctorjClasspath
+				args = [
+					"-r",
+					"${projectDir.absolutePath}/${lib}/asciidoctor_extensions.rb",
+					"-b",
+					"docbook",
+					"-d",
+					"glossary",
+					"-o",
+					"${commonOutputDir}/main_glossary.xml",
+					relativeGlossaryCollectionFile
+				]
+			}
+		}
+	}
+}
+
+task convertAsciidoc(dependsOn: ["getLibs", "cleanDocbook", "prepareCatalog", "prepareGlossary"]) {
+	def topLevelBooks = srcBuildTargetsFor.tokenize(",")
+
+	doFirst {
+		topLevelBooks.each { topLevelBook ->
+			println "Converting ${topLevelBook}..."
+			def bookDir = file("${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}")
+			
+			if(!bookDir.exists())
+			{
+				bookDir.mkdirs()
+			}
+			
+			javaexec {
+				main = "org.asciidoctor.cli.AsciidoctorInvoker"
+				classpath = asciidoctorjClasspath
+				args = "-r ${projectDir}/${lib}/asciidoctor_extensions.rb -b docbook -d book -o ${bookDir}/${topLevelBook}.xml ${relativeSrcDir}/${topLevelBook}/${topLevelBook}.txt".split().toList()
+			}
+			
+			javaexec {
+				main = "com.icl.saxon.StyleSheet"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration",
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = "-r org.apache.xml.resolver.tools.CatalogResolver -x org.apache.xml.resolver.tools.ResolvingXMLReader -y org.apache.xml.resolver.tools.ResolvingXMLReader -o ${bookDir}/${topLevelBook}.xml ${bookDir}/${topLevelBook}.xml ${lib}/asciidoc-book-id-append.xsl book-id=${topLevelBook}".split().toList()
+			}
+		}
+	}
+}
+
+task createSchematronValidationSheet() {
+	def validationOutputDir = file("${relativeOutputDir}/${outputDirValidation}")
+	
+	doFirst {
+		if(!validationOutputDir.exists())
+		{
+			validationOutputDir.mkdirs()
+		}
+		
+		javaexec {
+			main = "com.icl.saxon.StyleSheet"
+			classpath = xslt1Classpath
+			systemProperties = [
+				"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+				"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration"
+			]
+			args = "-o ${validationOutputDir}/schematronValidation.xsl ${lib}/${libDocbook}/sch/docbook.sch ${lib}/${libSchematron}/schematron-basic.xsl".split().toList()
+		}
+	}
+}
+
+task validate(dependsOn: ["convertAsciidoc", "createSchematronValidationSheet"]) {
+	def validationOutputDir = file("${relativeOutputDir}/${outputDirValidation}")
+	def topLevelBooks = srcToplevelBooks.tokenize(",")
+	def schematronErrorsFile = file("${validationOutputDir}/schematronErrors.txt")
+	
+	doFirst {
+		topLevelBooks.each { topLevelBook ->
+			println "Validating ${topLevelBook}..."
+			def sourceFile = file("${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}/${topLevelBook}.xml")
+		
+			javaexec {
+				main = "com.thaiopensource.relaxng.util.Driver"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.DocumentBuilderFactory":"org.apache.xerces.jaxp.DocumentBuilderFactoryImpl",
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration"
+				]
+				args = "-C ${lib}/prepared_catalog.xml -r com.thaiopensource.resolver.catalog.XercesCatalogResolverFactoryImpl ${lib}/${libDocbookRpgExtensions}/rng/${libDocbookRpgExtensions}.rng ${sourceFile}".split().toList()
+			}
+			
+			javaexec {
+				main = "com.icl.saxon.StyleSheet"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration",
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = "-r org.apache.xml.resolver.tools.CatalogResolver -x org.apache.xml.resolver.tools.ResolvingXMLReader -y org.apache.xml.resolver.tools.ResolvingXMLReader -o ${validationOutputDir}/schematronErrors.txt ${sourceFile} ${validationOutputDir}/schematronValidation.xsl".split().toList()
+			}
+			
+			if(schematronErrorsFile.length() > 0) {
+				println "Schematron validation errors..."
+				println schematronErrorsFile.text
+				throw new GradleException("Schematron validation errors")
+			}
+		}
+	}
+}
+
+task prepareOlinkTargets(dependsOn: ["validate"]) {
+	def docbookOutputDir = file("${relativeOutputDir}/${outputDirDocbook}")
+	def topLevelBooks = srcBuildTargetsFor.tokenize(",")
+	def sitemapDir = file("${docbookOutputDir}/sitemap")
+	def customization = "${lib}/olink-customizations.xsl"
+	
+	if(project.hasProperty("olinkCustomizationFile"))
+	{
+		customization = olinkCustomizationFile
+	}
+	
+	doFirst {
+		if(!sitemapDir.exists())
+		{
+			sitemapDir.mkdirs()
+		}
+		
+		topLevelBooks.each { topLevelBook ->
+			javaexec {
+				main = "com.icl.saxon.StyleSheet"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration",
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = "-r org.apache.xml.resolver.tools.CatalogResolver -x org.apache.xml.resolver.tools.ResolvingXMLReader -y org.apache.xml.resolver.tools.ResolvingXMLReader ${docbookOutputDir}/${topLevelBook}/${topLevelBook}.xml ${customization} collect.xref.targets=only targets.filename=${sitemapDir}/${topLevelBook}.db".split().toList()
+			}
+		}
+	}
+}
+
+task buildSingleHtml(dependsOn: prepareOlinkTargets) {
+	def htmlOutputDir = file("${relativeOutputDir}/${outputDirHtml}/${outputDirHtmlSingle}")
+	def topLevelBooks = srcToplevelBooks.tokenize(",")
+	
+	def initialStylesheet = file("${lib}/html-single-customizations.xsl")
+	if(project.hasProperty("singleHtmlCustomizationSytlesheet")) {
+		initialStylesheet = file("${rootDir.absolutePath}/${singleHtmlCustomizationSytlesheet}")
+	}
+	
+	def preprocessParamsFile = file("${lib}/preprocess-params.xsl")
+	
+	doFirst {
+		
+		topLevelBooks.each { topLevelBook ->
+			println "Building single HTML for ${topLevelBook}..."
+			
+			def bookOutputDir = file("${htmlOutputDir}/${topLevelBook}")
+			
+			if(!bookOutputDir.exists()) {
+				bookOutputDir.mkdirs()
+			}
+			
+			def calabashArgs = [
+				"--entity-resolver=org.xmlresolver.Resolver",
+				"--uri-resolver=org.xmlresolver.Resolver",
+				"-oresult=${bookOutputDir}/index.html",
+				"-isource=${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}/${topLevelBook}.xml",
+				"-pdraft.mode=${draft}",
+				"-poutput.dir=${bookOutputDir.absolutePath}/",
+				"-pNOW=${buildTime}",
+				"-pbook-name=${topLevelBook}",
+				"-ptarget.database.document=${rootDir.absolutePath}/${srcHtmlLinkingSitemap}",
+				"-pcurrent.docid=${topLevelBook}",
+				"${lib}/${libXslt2Stylesheets}/xslt/base/pipelines/docbook.xpl",
+				"html-initial-stylesheet=${initialStylesheet.absolutePath}",
+				"preprocess-params-file=${preprocessParamsFile.absolutePath}"
+			]
+			
+			if(useGlossaryCollection) {
+				calabashArgs = calabashArgs.plus(4, "-pglossary.collection=urn:x-docbookbuild:glossary")
+			}
+			
+			if(project.hasProperty("extraCalabashArgs")) {
+				calabashArgs = calabashArgs.plus(extraCalabashArgs.split(",").toList())
+			}
+			
+			javaexec {
+				main = "com.xmlcalabash.drivers.Main"
+				classpath = xslt2Classpath
+				systemProperties = [
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = calabashArgs
+			}
+			
+			if("yes".equals(draft)) {
+				copy {
+					from "${lib}/${libDocbookStylesheets}/images/draft.png"
+					into bookOutputDir
+				}
+			}
+			
+			copy {
+				from "${lib}/${libSlicknav}"
+				from "${relativeSrcDir}/${srcHtmlCommonJsFileDir}"
+				from ("${relativeSrcDir}/${srcHtmlSingleCssFileDir}") {
+					include srcHtmlSingleCssFile
+					include srcHtmlSinglePrintCssFile
+				}
+				from ("${relativeSrcDir}/${srcHtmlCommonCssFileDir}") {
+					include srcHtmlCommonCssFile
+					include srcHtmlCommonPrintCssFile
+				}
+				into bookOutputDir
+			}
+			
+			copy {
+				from "${relativeSrcDir}/${topLevelBook}/images"
+				into "${bookOutputDir}/images"
+			}
+		}
+	} 
+}
+
+task buildEpub(dependsOn: prepareOlinkTargets) {
+	def epubOutputDir = file("${relativeOutputDir}/${outputDirEpub}")
+	def epubTmpOutputDir = file("${relativeOutputDir}/${outputDirEpub}/tmp")
+	def topLevelBooks = srcToplevelBooks.tokenize(",")
+	
+	def customizationStylesheet = "${lib}/epub-customizations.xsl"
+	if(project.hasProperty("epubCustomizationSytlesheet"))
+	{
+		customizationStylesheet = "${rootDir.absolutePath}/${epubCustomizationSytlesheet}"
+	}
+	
+	doFirst {
+		
+		topLevelBooks.each { topLevelBook ->
+			println "Building EPUB for ${topLevelBook}..."
+			
+			def bookOutputDir = file("${epubOutputDir}/${topLevelBook}")
+			def bookTmpOutputDir = file("${epubTmpOutputDir}/${topLevelBook}")
+			
+			if(!bookOutputDir.exists() || !bookTmpOutputDir.exists()) {
+				bookOutputDir.mkdirs()
+				bookTmpOutputDir.mkdirs()
+			}
+			
+			def saxonArgs = [
+				"-r",
+				"org.apache.xml.resolver.tools.CatalogResolver",
+				"-x",
+				"org.apache.xml.resolver.tools.ResolvingXMLReader",
+				"-y",
+				"org.apache.xml.resolver.tools.ResolvingXMLReader",
+				"${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}/${topLevelBook}.xml",
+				"${customizationStylesheet}",
+				"base.dir=${bookOutputDir}/OEBPS/",
+				"draft.mode=${draft}",
+				"html.stylesheet=${relativeSrcDir}/${srcEpubCssFileDir}/${srcEpubCssFile}",
+				"NOW=${buildTime}",
+				"book-name=${topLevelBook}",
+				"target.database.document=${rootDir.absolutePath}/${srcEpubLinkingSitemap}"
+			]
+			
+			if(useGlossaryCollection) {
+				saxonArgs = saxonArgs.plus("glossary.collection=urn:x-docbookbuild:glossary")
+			}
+			
+			javaexec {
+				main = "com.icl.saxon.StyleSheet"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration",
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = saxonArgs
+			}
+			
+			if("yes".equals(draft)) {
+				copy {
+					from "${lib}/${libDocbookStylesheets}/images/draft.png"
+					into "${bookOutputDir}/OEBPS"
+				}
+			}
+			
+			copy {
+				from ("${relativeSrcDir}/${srcEpubCssFileDir}") {
+					include srcEpubCssFile
+				}
+				into "${bookOutputDir}/OEBPS"
+			}
+			
+			def assetsFile = file("${bookTmpOutputDir}/assets.txt")
+			
+			ant.xslt(style: "${lib}/epub-get-assets.xsl", in: "${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}/${topLevelBook}.xml", out: "${assetsFile}", force: true)
+			
+			if(assetsFile.length() > 0)
+			{
+				assetsFile.eachLine { line ->
+					if(!line.startsWith(".")) {
+						ant.get(src: line, dest: "${bookOutputDir}/OEBPS/")
+					}
+				}
+			}
+			
+			copy {
+				from "${relativeSrcDir}/${topLevelBook}/images"
+				into "${bookOutputDir}/OEBPS/images"
+			}
+			
+			ant.zip(basedir: bookOutputDir, destfile: "${bookOutputDir}/${systemName}-${topLevelBook}.epub", excludes: "*.epub", compress: true)
+		}
+	} 
+}
+
+task buildPdf(dependsOn: prepareOlinkTargets) {
+	def foOutputDir = file("${relativeOutputDir}/${outputDirFo}")
+	def pdfOutputDir = file("${relativeOutputDir}/${outputDirPdf}")
+	def topLevelBooks = srcToplevelBooks.tokenize(",")
+	
+	def customizationStylesheet = "${lib}/fo-customizations.xsl"
+	if(project.hasProperty("epubCustomizationSytlesheet"))
+	{
+		customizationStylesheet = "${rootDir.absolutePath}/${epubCustomizationSytlesheet}"
+	}
+	
+	doFirst {
+		
+		topLevelBooks.each { topLevelBook ->
+			println "Building PDF for ${topLevelBook}..."
+			
+			def bookFoOutputDir = file("${foOutputDir}/${topLevelBook}")
+			def bookPdfOutputDir = file("${pdfOutputDir}/${topLevelBook}")
+			
+			if(!bookFoOutputDir.exists() || !bookPdfOutputDir.exists()) {
+				bookFoOutputDir.mkdirs()
+				bookPdfOutputDir.mkdirs()
+			}
+			
+			def saxonArgs = [
+				"-r",
+				"org.apache.xml.resolver.tools.CatalogResolver",
+				"-x",
+				"org.apache.xml.resolver.tools.ResolvingXMLReader",
+				"-y",
+				"org.apache.xml.resolver.tools.ResolvingXMLReader",
+				"-o",
+				"${bookFoOutputDir}/${topLevelBook}.fo",
+				"${relativeOutputDir}/${outputDirDocbook}/${topLevelBook}/${topLevelBook}.xml",
+				"${customizationStylesheet}",
+				"draft.mode=${draft}",
+				"target.database.document=${rootDir.absolutePath}/${srcPDFLinkingSitemap}"
+			]
+			
+			if(useGlossaryCollection) {
+				saxonArgs = saxonArgs.plus("glossary.collection=urn:x-docbookbuild:glossary")
+			}
+			
+			javaexec {
+				main = "com.icl.saxon.StyleSheet"
+				classpath = xslt1Classpath
+				systemProperties = [
+					"javax.xml.parsers.SAXParserFactory":"org.apache.xerces.jaxp.SAXParserFactoryImpl",
+					"org.apache.xerces.xni.parser.XMLParserConfiguration":"org.apache.xerces.parsers.XIncludeParserConfiguration",
+					"xml.catalog.files":"${lib}/prepared_catalog.xml"
+				]
+				args = saxonArgs
+			}
+			
+			if("yes".equals(draft)) {
+				copy {
+					from "${lib}/${libDocbookStylesheets}/images/draft.png"
+					into "${bookFoOutputDir}"
+				}
+			}
+			
+			javaexec {
+				main = "org.apache.fop.cli.Main"
+				classpath = fopClasspath
+				args = "-fo ${bookFoOutputDir}/${topLevelBook}.fo -pdf ${bookPdfOutputDir}/${systemName}-${topLevelBook}_basic.pdf".split().toList()
+			}
+		}
+	} 
+}
+
+task buildAll(dependsOn: ["buildSingleHtml", "buildPdf", "buildEpub"]) { }

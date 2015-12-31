@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE targetset 
+       SYSTEM "urn:x-docbook-xsl:common:targetdatabase.dtd" [
+<!ENTITY player-guide SYSTEM "urn:x-twograves:sitemap:player-guide">
+<!ENTITY ap1 SYSTEM "urn:x-twograves:sitemap:ap1">
+<!ENTITY html-outputbase "https://rwdalpe.github.io/two-graves">
+]>
+<!--
+Copyright (C) 2014 Robert Winslow Dalpe
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<targetset>
+  <targetsetinfo>
+    Description of this target database document,
+    which is for the
+    examples in olink doc.
+  </targetsetinfo>
+  <document targetdoc="player-guide" baseuri="&html-outputbase;/player-guide/index.html">
+    &player-guide;
+  </document>
+  <document targetdoc="ap1" baseuri="&html-outputbase;/ap1/index.html">
+    &ap1;
+  </document>
+</targetset>
