@@ -257,51 +257,54 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		</xsl:choose>
 	</xsl:template>
 	
-	<xsl:template name="t:user-titlepage-templates" as="element(tmpl:templates-list)?">
-		<tmpl:templates-list>
-			<tmpl:templates name="book">
-				<tmpl:recto>
-					<db:cover role="front-cover"/>
-					<header tmpl:class="titlepage">
-						<db:title-group />
-						<xsl:if test="/db:book/db:info/db:volumenum">
-							<div class="volume-info">Book <db:volumenum /> of <db:seriesvolnums /></div> 
-						</xsl:if>
-						<db:corpauthor />
-						<db:authorgroup />
-						<db:author />
-						<db:editor />
-						<db:othercredit />
-						<div class="bottom-matter">
-							<db:releaseinfo />
-							<db:copyright />
-							<db:legalnotice />
-							<db:pubdate />
-							<db:printhistory />
-							<db:revision />
-							<db:revhistory />
-						</div>
-						<db:abstract />
-					</header>
-					<hr tmpl:keep="true" />
-				</tmpl:recto>
-			</tmpl:templates>
-			
-			<tmpl:templates name="warning">
-				<tmpl:titlepage>
-					<header>
-						<db:title/>
-					</header>
-				</tmpl:titlepage>
-			</tmpl:templates>
-			<tmpl:templates name="tip">
-				<tmpl:titlepage>
-					<header>
-						<db:title/>
-					</header>
-				</tmpl:titlepage>
-			</tmpl:templates>
-		</tmpl:templates-list>
+	<xsl:template match="db:book" mode="m:get-titlepage-templates" as="element(tmpl:templates)">
+		<tmpl:templates>
+			<tmpl:recto>
+				<db:cover role="front-cover"/>
+				<header tmpl:class="titlepage">
+					<db:title-group />
+					<xsl:if test="/db:book/db:info/db:volumenum">
+						<div class="volume-info">Book <db:volumenum /> of <db:seriesvolnums /></div> 
+					</xsl:if>
+					<db:corpauthor />
+					<db:authorgroup />
+					<db:author />
+					<db:editor />
+					<db:othercredit />
+					<div class="bottom-matter">
+						<db:releaseinfo />
+						<db:copyright />
+						<db:legalnotice />
+						<db:pubdate />
+						<db:printhistory />
+						<db:revision />
+						<db:revhistory />
+					</div>
+					<db:abstract />
+				</header>
+				<hr tmpl:keep="true" />
+			</tmpl:recto>
+		</tmpl:templates>
+	</xsl:template>
+	
+	<xsl:template match="db:warning" mode="m:get-titlepage-templates" as="element(tmpl:templates)">
+		<tmpl:templates>
+			<tmpl:titlepage>
+				<header>
+					<db:title/>
+				</header>
+			</tmpl:titlepage>
+		</tmpl:templates>
+	</xsl:template>
+	
+	<xsl:template match="db:tip" mode="m:get-titlepage-templates" as="element(tmpl:templates)">
+		<tmpl:templates>
+			<tmpl:titlepage>
+				<header>
+					<db:title/>
+				</header>
+			</tmpl:titlepage>
+		</tmpl:templates>
 	</xsl:template>
 	
 	<xsl:template name="t:user-localization-data">
