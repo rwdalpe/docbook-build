@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	exclude-result-prefixes="t xsl m db tmpl f xs usrfn mp xlink h">
 
-	<xsl:import href="docbook-xslt2-2.0.12-rwdalpe/xslt/base/html/final-pass.xsl" />
+	<xsl:import href="docbook-xslt2-2.0.20-rwdalpe/xslt/base/html/final-pass.xsl" />
 	<xsl:import href="docbook-xslt2-rwdalpe-extension_rpg/html/all.xsl" />
 
 	<xsl:param name="use.extensions" select="'1'" />
@@ -40,6 +40,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<xsl:param name="generate.index" select="0"/>
 	<xsl:param name="glossterm.auto.link" select="1" />
 	<xsl:param name="glossary.sort" select="1" />
+	<xsl:param name="syntax-highlighter" select="'0'" />
+	<xsl:param name="scripts.builtin.ignore" select="'1'" />
+	<xsl:param name="styles.builtin.ignore" select="'1'" />
 	<xsl:param name="autolabel.elements">
 		<db:appendix format="A" />
 		<db:figure />
@@ -58,8 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<tocparam path="book" toc="1" title="1"/>
 	</xsl:param>
 
-	<xsl:template name="t:user-head-content">
-		<xsl:param name="node" select="." />
+	<xsl:template match="*" mode="m:head-content">
 		<meta xmlns="http://www.w3.org/1999/xhtml" name="viewport" content="initial-scale=1" />
 		<script>
 			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

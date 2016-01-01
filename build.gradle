@@ -348,8 +348,8 @@ task buildSingleHtml(dependsOn: prepareOlinkTargets) {
 				"-pNOW=${buildTime}",
 				"-pbook-name=${topLevelBook}",
 				"-pcurrent.docid=${topLevelBook}",
-				"${lib}/${libXslt2Stylesheets}/xslt/base/pipelines/docbook.xpl",
-				"html-initial-stylesheet=${initialStylesheet.absolutePath}",
+				"${lib}/${libXslt2Stylesheets}/xslt/base/pipelines/db2html.xpl",
+				"initial-stylesheet=${initialStylesheet.absolutePath}",
 				"preprocess-params-file=${preprocessParamsFile.absolutePath}"
 			]
 			
