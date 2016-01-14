@@ -4,75 +4,69 @@ repositories {
 	maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
+apply plugin: "groovy"
+
 configurations {
-	build
+	runtime {
+		transitive = true
+	}
 }
 
 dependencies {
-	build "net.sf.saxon:Saxon-HE:9.6.0-7"
-	// travis-ci gradle builds seemt o have trouble with this, so we're doing manual dependency
-	// handling for now, hopefully we get to uncomment this in the future
-	// build 'com.xmlcalabash:xmlcalabash:1.1.9-96'
-	build "org.apache.xmlgraphics:fop:2.0"
+	compile gradleApi()
+	compile localGroovy()
+	runtime "net.sf.saxon:Saxon-HE:9.6.0-7"
+	runtime 'com.xmlcalabash:xmlcalabash:1.1.9-96'
+	runtime "org.apache.xmlgraphics:fop:2.0"
 }
 
-task clean { 
+group = "com.github.rwdalpe"
+version = "0.0.1"
+libsDirName = "dist"
+
+task getXsltAssets() {
+	ext.lib = file("${buildDir}/xslt-assets/assets")
+
+	if(!ext.lib.exists()) {
+		ext.lib.mkdir()
+	}
+
 	doFirst {
-		delete outputDir
+		ant.get(dest: ext.lib, src: "${libJingUrl}", skipexisting: true)
+		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libJingZip}", overwrite: false)
+		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
+		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libXslt2StylesheetsZip}", overwrite: false)
+		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
+		ant.get(dest: ext.lib, src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${lib}/${libDocbookRpgExtensions}", src: "${ext.lib}/${libDocbookRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${ext.lib}/${libXslt2StylesheetsRpgExtensions}", src: "${ext.lib}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: ext.lib, src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${ext.lib}/${libXslt1StylesheetsRpgExtensions}", src: "${ext.lib}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
 	}
 }
 
-task cleanGradleLibs(type: Delete) {
-	doFirst {
-		delete "${libDir}/gradle"
-	}
+task zipAssets(type: Zip) {
+	from "plugin/src/main/resources/assets"
+	from tasks.getXsltAssets.lib
+	into "docbook-build-assets-${version}"
+	archiveName "docbook-build-assets-${version}.zip"
+	destinationDir = libsDir
 }
 
-task copyGradleLibs() {
-	configurations.build.resolvedConfiguration.firstLevelModuleDependencies.each { dep ->
-		def f = new File("${libDir}/gradle", dep.moduleName)
-		dep.allModuleArtifacts.each { artifact ->
-			copy {
-				from artifact.getFile()
-				into f
-			}
+sourceSets {
+	main {
+		java {
+			srcDirs = ['plugin/src/main/java']
+		}
+		resources {
+			srcDirs = [tasks.getXsltAssets.lib, 'plugin/src/main/resources']
 		}
 	}
 }
 
-task getGradleLibs(dependsOn: copyGradleLibs) {
-	def lib = new File("${libDir}/gradle")
-	
-	if(!lib.exists()) {
-		lib.mkdir()
-	}
-	
-	doFirst {
-		ant.get(dest: lib, src: "${libJingUrl}", skipexisting: true)
-		ant.unzip(dest: lib, src: "${lib}/${libJingZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libXmlCalabashUrl}", skipexisting: true)
-		ant.unzip(dest: lib, src: "${lib}/${libXmlCalabashZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
-		ant.unzip(dest: lib, src: "${lib}/${libXslt2StylesheetsZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: lib, src: "${lib}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${lib}/${libDocbookRpgExtensions}", src: "${lib}/${libDocbookRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${lib}/${libXslt2StylesheetsRpgExtensions}", src: "${lib}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: lib, src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${lib}/${libXslt1StylesheetsRpgExtensions}", src: "${lib}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
-	}
-}
-
-task dist(dependsOn: ["getGradleLibs"], type: Zip) {
-	from (".") {
-		include "import.gradle"
-		include "lib/**"
-		include "./*.txt"
-		include "./*.md"
-	}
-	into "docbook-build_v${projVersion}"
-	archiveName "docbook-build_v${projVersion}.zip"
-	destinationDir = file("${outputDir}")
+artifacts {
+	archives jar
+	archives zipAssets
 }

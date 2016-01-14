@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?><!--
+Copyright (C) 2014 Robert Winslow Dalpe
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--><catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog"><group prefer="system" id="docbook-catalog" xml:base="./"><system systemId="urn:x-docbook-xsl:common:targetdatabase.dtd" uri="docbook-xsl-ns-1.78.1/common/targetdatabase.dtd"/></group><group prefer="system" id="common-catalog" xml:base="/home/winslow/Documents/two-graves/output/docbook/common/"><uri name="urn:x-twograves:glossary" uri="./main_glossary.xml"/></group><group prefer="system" id="sitemap-catalog" xml:base="/home/winslow/Documents/two-graves/output/docbook/sitemap/"><system systemId="urn:x-twograves:sitemap:player-guide" uri="player-guide.db"/><system systemId="urn:x-twograves:sitemap:ap1" uri="ap1.db"/></group></catalog>

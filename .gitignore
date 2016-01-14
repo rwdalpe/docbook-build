@@ -1,8 +1,9 @@
 .*lock*
 .idea
+*.iml
 .*project
 .gradle
-output
+build
 docbook.xsd
 lib/*.zip
 lib/gradle
