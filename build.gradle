@@ -23,33 +23,41 @@ dependencies {
 group = "com.github.rwdalpe"
 version = "0.0.1"
 libsDirName = "dist"
+def xsltAssetsDir = file("${buildDir}/xslt-assets")
 
 task getXsltAssets() {
-	ext.lib = file("${buildDir}/xslt-assets/assets")
-
-	if(!ext.lib.exists()) {
-		ext.lib.mkdir()
-	}
+	ext.lib = xsltAssetsDir
+	ext.unpackDir = file("${ext.lib}/assets")
+	def zipSaveDir = file("${buildDir}/xslt-assets-zips")
 
 	doFirst {
-		ant.get(dest: ext.lib, src: "${libJingUrl}", skipexisting: true)
-		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libJingZip}", overwrite: false)
-		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
-		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libXslt2StylesheetsZip}", overwrite: false)
-		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: ext.lib, src: "${ext.lib}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
-		ant.get(dest: ext.lib, src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${lib}/${libDocbookRpgExtensions}", src: "${ext.lib}/${libDocbookRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: ext.lib, src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${ext.lib}/${libXslt2StylesheetsRpgExtensions}", src: "${ext.lib}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: ext.lib, src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${ext.lib}/${libXslt1StylesheetsRpgExtensions}", src: "${ext.lib}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
+		if(!zipSaveDir.exists()) {
+			zipSaveDir.mkdirs()
+		}
+
+		if(!ext.lib.exists()) {
+			ext.lib.mkdirs()
+			ext.unpackDir.mkdirs()
+		}
+
+		ant.get(dest: zipSaveDir, src: "${libJingUrl}", skipexisting: true)
+		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libJingZip}", overwrite: false)
+		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
+		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsZip}", overwrite: false)
+		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
+		ant.get(dest: zipSaveDir, src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${ext.unpackDir}/${libDocbookRpgExtensions}", src: "${zipSaveDir}/${libDocbookRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${ext.unpackDir}/${libXslt2StylesheetsRpgExtensions}", src: "${zipSaveDir}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
+		ant.get(dest: zipSaveDir, src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
+		ant.unzip(dest: "${ext.unpackDir}/${libXslt1StylesheetsRpgExtensions}", src: "${zipSaveDir}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
 	}
 }
 
 task zipAssets(type: Zip) {
 	from "plugin/src/main/resources/assets"
-	from tasks.getXsltAssets.lib
+	from tasks.getXsltAssets.unpackDir
 	into "docbook-build-assets-${version}"
 	archiveName "docbook-build-assets-${version}.zip"
 	destinationDir = libsDir
@@ -61,7 +69,7 @@ sourceSets {
 			srcDirs = ['plugin/src/main/java']
 		}
 		resources {
-			srcDirs = [tasks.getXsltAssets.lib, 'plugin/src/main/resources']
+			srcDirs = [xsltAssetsDir, 'plugin/src/main/resources']
 		}
 	}
 }
@@ -70,3 +78,5 @@ artifacts {
 	archives jar
 	archives zipAssets
 }
+
+tasks.compileJava.dependsOn tasks.getXsltAssets
