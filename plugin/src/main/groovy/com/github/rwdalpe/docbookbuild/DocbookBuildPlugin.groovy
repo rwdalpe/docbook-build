@@ -1,12 +1,14 @@
 package com.github.rwdalpe.docbookbuild
 
 import com.github.rwdalpe.docbookbuild.tasks.PrepareAssetsTask
+import com.github.rwdalpe.docbookbuild.tasks.ValidateTask
 import groovy.transform.PackageScope
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 public class DocbookBuildPlugin implements Plugin<Project> {
     @PackageScope static Properties pluginProperties = null
+    @PackageScope static String assetsDirName = "docbook-build-assets"
 
     @Override
     void apply(Project project) {
@@ -14,6 +16,7 @@ public class DocbookBuildPlugin implements Plugin<Project> {
 
         project.extensions.create("docbookbuild", DocbookBuildPluginExtension, project)
         project.task("prepareAssets", type: PrepareAssetsTask)
+        project.task("validate", type:ValidateTask)
     }
 
     Properties getPluginProperties() {

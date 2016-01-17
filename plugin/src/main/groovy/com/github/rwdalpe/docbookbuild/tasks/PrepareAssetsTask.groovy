@@ -30,8 +30,7 @@ public class PrepareAssetsTask extends DefaultTask {
     }
 
     private void createAssetsDirectory() {
-        def assetsResourceDir = project.docbookbuild.assetsExtractionDir
-        assetsResourceDirFile = project.file(assetsResourceDir)
+        assetsResourceDirFile = project.docbookbuild.assetsExtractionDir
 
         if (assetsResourceDirFile.exists()) {
             assetsResourceDirFile.delete()
