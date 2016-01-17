@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 repositories {
 	mavenCentral()
 	maven { url "https://maven.restlet.com/" }
@@ -24,6 +26,14 @@ group = "com.github.rwdalpe"
 version = "0.0.1"
 libsDirName = "dist"
 def xsltAssetsDir = file("${buildDir}/xslt-assets")
+
+def createReplaceTokens = { tokens ->
+	def projectProps = project.getProperties()
+	return tokens.collectEntries { token ->
+		def tokenValue = projectProps.get(token)
+		return [token, ("${token}=${tokenValue}").toString()]
+	}
+}
 
 task getXsltAssets() {
 	ext.lib = xsltAssetsDir
@@ -55,7 +65,7 @@ task getXsltAssets() {
 	}
 }
 
-task zipAssets(type: Zip) {
+task zipAssetsForArtifact(type: Zip, dependsOn: [getXsltAssets]) {
 	from "plugin/src/main/resources/assets"
 	from tasks.getXsltAssets.unpackDir
 	into "docbook-build-assets-${version}"
@@ -63,20 +73,36 @@ task zipAssets(type: Zip) {
 	destinationDir = libsDir
 }
 
+task zipAssetsForJar(type: Zip, dependsOn: [getXsltAssets]) {
+	from "plugin/src/main/resources/assets"
+	from tasks.getXsltAssets.unpackDir
+	into "docbook-build-assets"
+	archiveName "docbook-build-assets.zip"
+	destinationDir = file("${xsltAssetsDir}/final")
+}
+
+task preparePropertiesFile(type: Copy, dependsOn: [zipAssetsForJar]) {
+	from "plugin/src/main/resources"
+	into file("${xsltAssetsDir}/final").absolutePath
+	include "*.properties"
+	rename("sample-properties.properties", "docbook-build.properties")
+	filter(ReplaceTokens, tokens: createReplaceTokens(["libDocbookRpgExtensions", "libJing", "libXslt2Stylesheets", "libXslt2StylesheetsExtensions", "libXslt2StylesheetsRpgExtensions", "libXslt1StylesheetsRpgExtensions"]))
+}
+
 sourceSets {
 	main {
-		java {
-			srcDirs = ['plugin/src/main/java']
+		groovy {
+			srcDirs = ['plugin/src/main/groovy']
 		}
 		resources {
-			srcDirs = [xsltAssetsDir, 'plugin/src/main/resources']
+			srcDirs = ["${xsltAssetsDir}/final"]
 		}
 	}
 }
 
 artifacts {
+	archives zipAssetsForArtifact
 	archives jar
-	archives zipAssets
 }
 
-tasks.compileJava.dependsOn tasks.getXsltAssets
+tasks.compileGroovy.dependsOn tasks.getXsltAssets, tasks.preparePropertiesFile
