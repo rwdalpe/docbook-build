@@ -11,6 +11,14 @@ public class DocbookBuildPlugin implements Plugin<Project> {
     @PackageScope static Properties pluginProperties = null
     @PackageScope static String assetsDirName = "docbook-build-assets"
 
+    @PackageScope static File getAssetsDir(Project project) {
+        return project.file("${project.docbookbuild.assetsExtractionDir}/${DocbookBuildPlugin.assetsDirName}")
+    }
+
+    @PackageScope static File getWorkingDir(Project project) {
+        return project.docbookbuild.workingDir
+    }
+
     @Override
     void apply(Project project) {
         pluginProperties = getPluginProperties()

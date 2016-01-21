@@ -1,4 +1,4 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
-public class PrepareAssetsTaskExtension {
+public class Xslt1StylesheetsTask {
 }

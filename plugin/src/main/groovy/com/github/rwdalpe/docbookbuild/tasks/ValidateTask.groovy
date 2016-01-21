@@ -1,9 +1,8 @@
 package com.github.rwdalpe.docbookbuild.tasks
-import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
+
 import com.thaiopensource.relaxng.jaxp.CompactSyntaxSchemaFactory
-import groovy.transform.PackageScope
 import org.apache.xerces.util.XMLCatalogResolver
-import org.gradle.api.DefaultTask
+import org.apache.xml.resolver.tools.CatalogResolver
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.xml.sax.SAXParseException
@@ -16,14 +15,16 @@ import javax.xml.validation.Schema
 import javax.xml.validation.SchemaFactory
 import javax.xml.validation.Validator
 
-public class ValidateTask extends DefaultTask {
-    private File assetsDir = project.file("${project.docbookbuild.assetsExtractionDir}/${DocbookBuildPlugin.assetsDirName}")
-    private File workingDir = project.docbookbuild.workingDir
-    private File validationDir = project.file("${workingDir}/validation")
+public class ValidateTask extends BaseXsltTask {
+    private final File validationDir
 
-    File initialRncFile = project.file("${assetsDir}/docbook-5.0-extension_rwdalpe-rpg/rng/docbook-5.0-extension_rwdalpe-rpg.rnc")
-    Set<File> srcFiles
-    Set<File> catalogFiles
+    File initialRncFile
+
+    ValidateTask() {
+        super()
+        validationDir = project.file("${workingDir}/validation")
+        initialRncFile = project.file("${assetsDir}/docbook-5.0-extension_rwdalpe-rpg/rng/docbook-5.0-extension_rwdalpe-rpg.rnc")
+    }
 
     File getValidationDir() {
         return validationDir
@@ -35,22 +36,6 @@ public class ValidateTask extends DefaultTask {
 
     void setInitialRncFile(File initialRncFile) {
         this.initialRncFile = initialRncFile
-    }
-
-    Set<File> getCatalogFiles() {
-        return catalogFiles
-    }
-
-    void setCatalogFiles(Set<File> catalogFiles) {
-        this.catalogFiles = catalogFiles
-    }
-
-    Set<File> getSrcFiles() {
-        return srcFiles
-    }
-
-    void setSrcFiles(Set<File> srcFiles) {
-        this.srcFiles = srcFiles
     }
 
     @TaskAction
@@ -65,13 +50,11 @@ public class ValidateTask extends DefaultTask {
     }
 
     private void schematronValidateFiles(Set<File> toValidate, File schematronValidationStylesheet) {
-        XMLCatalogResolver resolver = new XMLCatalogResolver((String[])(catalogFiles.collect { it.absolutePath }))
+        CatalogResolver resolver = createCatalogResolver()
 
-        System.setProperty('javax.xml.parsers.SAXParserFactory', 'org.apache.xerces.jaxp.SAXParserFactoryImpl')
-        System.setProperty('org.apache.xerces.xni.parser.XMLParserConfiguration', 'org.apache.xerces.parsers.XIncludeParserConfiguration')
-
-        TransformerFactory tFactory = TransformerFactory.newInstance()
+        TransformerFactory tFactory = createXslt1TransformerFactory()
         Transformer t = tFactory.newTransformer(new StreamSource(schematronValidationStylesheet))
+        t.setURIResolver(resolver)
 
         Set<File> errorsFiles = new HashSet<File>()
 
@@ -96,7 +79,7 @@ public class ValidateTask extends DefaultTask {
 
     private void rncValidateFiles(Set<File> toValidate) {
 
-        XMLCatalogResolver resolver = new XMLCatalogResolver((String[])(catalogFiles.collect { it.absolutePath }))
+        XMLCatalogResolver resolver = createXmlCatalogResolver()
 
         System.setProperty('javax.xml.parsers.SAXParserFactory', 'org.apache.xerces.jaxp.SAXParserFactoryImpl')
         System.setProperty('org.apache.xerces.xni.parser.XMLParserConfiguration', 'org.apache.xerces.parsers.XIncludeParserConfiguration')
@@ -126,15 +109,11 @@ public class ValidateTask extends DefaultTask {
             validationDir.mkdirs()
         }
 
-
-        System.setProperty('javax.xml.parsers.SAXParserFactory', 'org.apache.xerces.jaxp.SAXParserFactoryImpl')
-        System.setProperty('org.apache.xerces.xni.parser.XMLParserConfiguration', 'org.apache.xerces.parsers.XIncludeParserConfiguration')
-
         def schematronCreationStylesheet = new File("${assetsDir}/schematron1.5/schematron-basic.xsl".toString())
         def docbookSchematron = new File("${assetsDir}/docbook-5.0/sch/docbook.sch".toString())
         def finalValidationStylesheet = new File("${validationDir}/schematronValidation.xsl".toString())
 
-        TransformerFactory tFactory = TransformerFactory.newInstance()
+        TransformerFactory tFactory = createXslt1TransformerFactory()
         Transformer t = tFactory.newTransformer(new StreamSource(schematronCreationStylesheet))
         t.transform(new StreamSource(docbookSchematron),
                 new StreamResult(finalValidationStylesheet))

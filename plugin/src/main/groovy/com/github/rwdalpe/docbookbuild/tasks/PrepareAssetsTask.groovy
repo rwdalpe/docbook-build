@@ -1,11 +1,8 @@
 package com.github.rwdalpe.docbookbuild.tasks
-
+import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-
-import net.lingala.zip4j.core.ZipFile
-import sun.misc.IOUtils;
 
 public class PrepareAssetsTask extends DefaultTask {
     private File assetsResourceDirFile
