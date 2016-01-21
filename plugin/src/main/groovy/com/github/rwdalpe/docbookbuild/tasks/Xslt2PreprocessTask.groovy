@@ -1,4 +1,10 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
-public class Xslt2PreprocessTask extends BaseXsltTask {
+import javax.xml.transform.TransformerFactory
+
+public class Xslt2PreprocessTask extends BaseXsltPreprocessTask {
+    @Override
+    protected TransformerFactory createTransformerFactory() {
+        return createXslt2TransformerFactory()
+    }
 }
