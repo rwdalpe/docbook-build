@@ -51,7 +51,7 @@ public abstract class BaseXsltPreprocessTask extends BaseXsltTask {
         }
 
         CatalogResolver resolver = createCatalogResolver()
-        TransformerFactory tFactory = createXslt1TransformerFactory()
+        TransformerFactory tFactory = createTransformerFactory()
 
         for(File stylesheet : stylesheetChain.keySet()) {
             Map<String, String> params = stylesheetChain.get(stylesheet)
