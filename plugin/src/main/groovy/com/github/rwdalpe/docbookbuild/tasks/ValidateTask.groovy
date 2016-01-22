@@ -15,7 +15,7 @@ import javax.xml.validation.Schema
 import javax.xml.validation.SchemaFactory
 import javax.xml.validation.Validator
 
-public class ValidateTask extends BaseXsltTask {
+public class ValidateTask extends MultiSourceBaseXsltTask {
     private final File validationDir
 
     File initialRncFile
@@ -28,14 +28,6 @@ public class ValidateTask extends BaseXsltTask {
 
     File getValidationDir() {
         return validationDir
-    }
-
-    File getInitialRncFile() {
-        return initialRncFile
-    }
-
-    void setInitialRncFile(File initialRncFile) {
-        this.initialRncFile = initialRncFile
     }
 
     @TaskAction
