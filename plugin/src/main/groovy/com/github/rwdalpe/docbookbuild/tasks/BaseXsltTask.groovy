@@ -27,8 +27,10 @@ public abstract class BaseXsltTask extends DefaultTask {
 
     protected CatalogResolver createCatalogResolver() {
         CatalogManager manager = new CatalogManager()
-        manager.setCatalogFiles(catalogFiles.join(";"))
+        manager.setCatalogFiles(catalogFiles.collect({it.absolutePath}).join(";"))
         manager.setIgnoreMissingProperties(true)
+        manager.setRelativeCatalogs(true)
+        manager.setUseStaticCatalog(false)
 
         return new CatalogResolver(manager)
     }

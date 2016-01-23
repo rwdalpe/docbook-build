@@ -1,19 +1,15 @@
 package com.github.rwdalpe.docbookbuild.tasks
-
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FilenameUtils
 import org.apache.xml.resolver.tools.CatalogResolver
 import org.gradle.api.Action
-import org.gradle.api.Task
 import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.bundling.Zip
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
 
-import javax.xml.transform.Result
 import javax.xml.transform.Transformer
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.sax.SAXSource
@@ -39,6 +35,7 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
 
         CatalogResolver resolver = createCatalogResolver()
         TransformerFactory tFactory = createTransformerFactory()
+        tFactory.setURIResolver(resolver)
 
         XMLReader reader = createXmlReader()
         reader.setEntityResolver(resolver)
