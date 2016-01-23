@@ -25,7 +25,6 @@ public class DocbookBuildPlugin implements Plugin<Project> {
 
         project.extensions.create("docbookbuild", DocbookBuildPluginExtension, project)
         project.task("prepareAssets", type: PrepareAssetsTask)
-        project.task("validate", type:ValidateTask)
     }
 
     Properties getPluginProperties() {

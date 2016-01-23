@@ -90,6 +90,11 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
     public ToEpubTask zipTo(File zipFile) {
 
         this.doLast({
+            File zipParent = zipFile.getParentFile()
+            if(!zipParent.exists()) {
+                zipParent.mkdirs()
+            }
+            
             ZipFile z = new ZipFile(zipFile)
             z.createZipFileFromFolder(owner.getBaseDir().getParentFile(),
                     new ZipParameters() {{

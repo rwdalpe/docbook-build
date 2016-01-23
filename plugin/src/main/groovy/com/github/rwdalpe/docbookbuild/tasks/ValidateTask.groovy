@@ -51,7 +51,7 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
         Set<File> errorsFiles = new HashSet<File>()
 
         toValidate.each { f ->
-            def errorFile = new File("${getValidationDir().absolutePath}/${f}.schematronerrors".toString())
+            def errorFile = new File("${getValidationDir().absolutePath}/${f.getName()}.schematronerrors".toString())
             t.transform(new StreamSource(f),
                     new StreamResult(errorFile))
             errorsFiles.add(errorFile)

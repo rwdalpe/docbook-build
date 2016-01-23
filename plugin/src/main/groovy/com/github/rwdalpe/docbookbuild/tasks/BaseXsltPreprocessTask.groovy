@@ -15,6 +15,7 @@ public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
     File outputDir
     String suffix
     Map<File, Map<String, Object>> stylesheetChain
+    Closure forEachSrc
 
     BaseXsltPreprocessTask() {
         super()
@@ -60,6 +61,10 @@ public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
                 }
 
                 t.transform(inFile, new StreamResult(outFile))
+            }
+
+            if(forEachSrc != null) {
+                forEachSrc(srcFile, outFile)
             }
         }
     }
