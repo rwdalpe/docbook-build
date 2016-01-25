@@ -4,8 +4,12 @@ import groovy.transform.PackageScope
 import org.apache.commons.io.FilenameUtils
 import org.apache.fop.apps.Fop
 import org.apache.fop.apps.FopFactory
+import org.apache.fop.apps.FopFactoryBuilder
 import org.apache.fop.apps.MimeConstants
+import org.apache.fop.apps.io.InternalResourceResolver
 import org.apache.xml.resolver.tools.CatalogResolver
+import org.apache.xmlgraphics.io.Resource
+import org.apache.xmlgraphics.io.ResourceResolver
 import org.gradle.api.tasks.TaskAction
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
@@ -18,8 +22,6 @@ import javax.xml.transform.stream.StreamResult
 import javax.xml.transform.stream.StreamSource
 
 public class ToPdfTask extends Xslt1StylesheetsTask {
-
-    private static FopFactory fopFactory = FopFactory.newInstance()
 
     File foFile
 
@@ -82,6 +84,9 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
         if(!outputFile.getParentFile().exists()) {
             outputFile.getParentFile().mkdirs()
         }
+
+        FopFactoryBuilder fopFactoryBuilder = new FopFactoryBuilder(outputDir.toURI())
+        FopFactory fopFactory = fopFactoryBuilder.build()
 
         CatalogResolver resolver = createCatalogResolver()
         TransformerFactory tFactory = createTransformerFactory()
