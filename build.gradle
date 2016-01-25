@@ -22,9 +22,9 @@ dependencies {
 	compile "saxon:saxon:6.5.3"
 	compile 'com.thaiopensource:jing:20091111'
 	compile 'xml-resolver:xml-resolver:1.2'
-	runtime "net.sf.saxon:Saxon-HE:9.6.0-7"
-	runtime 'com.xmlcalabash:xmlcalabash:1.1.9-96'
-	runtime "org.apache.xmlgraphics:fop:2.0"
+	compile 'org.apache.xmlgraphics:fop:1.1'
+	compile "net.sf.saxon:Saxon-HE:9.6.0-7"
+	compile 'com.xmlcalabash:xmlcalabash:1.1.9-96'
 }
 
 group = "com.github.rwdalpe"

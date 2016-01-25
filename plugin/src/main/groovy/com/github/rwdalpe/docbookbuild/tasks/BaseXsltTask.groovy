@@ -5,7 +5,9 @@ import org.apache.xerces.jaxp.SAXParserFactoryImpl
 import org.apache.xerces.util.XMLCatalogResolver
 import org.apache.xml.resolver.CatalogManager
 import org.apache.xml.resolver.tools.CatalogResolver
+import org.gradle.api.Action
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.CopySpec
 import org.xml.sax.XMLReader
 
 import javax.xml.parsers.SAXParser
@@ -23,6 +25,20 @@ public abstract class BaseXsltTask extends DefaultTask {
         assetsDir = DocbookBuildPlugin.getAssetsDir(project)
         workingDir = DocbookBuildPlugin.getWorkingDir(project)
         catalogFiles = new HashSet<>()
+    }
+
+    public BaseXsltTask copy(Action<? super CopySpec> action) {
+        this.doLast {
+            project.copy(action)
+        }
+        return this
+    }
+
+    public BaseXsltTask copy(Closure closure) {
+        this.doLast {
+            project.copy(closure)
+        }
+        return this
     }
 
     protected CatalogResolver createCatalogResolver() {

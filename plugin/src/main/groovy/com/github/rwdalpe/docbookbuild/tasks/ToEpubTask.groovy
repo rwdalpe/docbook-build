@@ -57,20 +57,6 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
         t.transform(inFile, new StreamResult(new StringWriter()))
     }
 
-    public ToEpubTask copy(Action<? super CopySpec> action) {
-        this.doLast {
-            project.copy(action)
-        }
-        return this
-    }
-
-    public ToEpubTask copy(Closure closure) {
-        this.doLast {
-            project.copy(closure)
-        }
-        return this
-    }
-
     public File getBaseDir() {
         if (baseDir == null) {
             baseDir = project.file("${outputDir}/${FilenameUtils.removeExtension(srcFile.getName())}/OEBPS")
@@ -94,7 +80,7 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
             if(!zipParent.exists()) {
                 zipParent.mkdirs()
             }
-            
+
             ZipFile z = new ZipFile(zipFile)
             z.createZipFileFromFolder(owner.getBaseDir().getParentFile(),
                     new ZipParameters() {{
