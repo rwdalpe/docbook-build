@@ -6,10 +6,7 @@ import org.apache.fop.apps.Fop
 import org.apache.fop.apps.FopFactory
 import org.apache.fop.apps.FopFactoryBuilder
 import org.apache.fop.apps.MimeConstants
-import org.apache.fop.apps.io.InternalResourceResolver
 import org.apache.xml.resolver.tools.CatalogResolver
-import org.apache.xmlgraphics.io.Resource
-import org.apache.xmlgraphics.io.ResourceResolver
 import org.gradle.api.tasks.TaskAction
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
@@ -23,30 +20,33 @@ import javax.xml.transform.stream.StreamSource
 
 public class ToPdfTask extends Xslt1StylesheetsTask {
 
-    File foFile
+    String foFileName
 
     ToPdfTask() {
         super()
         initialStylesheet = project.file("${baseStylesheetsDir}/fo/docbook.xsl")
-        outputDir = project.file("${workingDir}/docbook-build-pdf/")
     }
 
-    void setOutputFile(File outputFile) {
+    String getFoFileName() {
+        if(foFileName == null) {
+            foFileName = "${FilenameUtils.removeExtension(srcFile.getName())}.fo"
+        }
+        return foFileName
+    }
+
+    @Override
+    File getOutputDir() {
+        if(super.getOutputDir() == null) {
+            this.outputDir = project.file("${workingDir}/docbook-build-pdf/${FilenameUtils.removeExtension(srcFile.getName())}")
+        }
+
+        return super.getOutputDir()
+    }
+
+    void setPdfFile(File pdfFile) {
         this.doLast {
-            doPdfTransform(outputFile)
+            doPdfTransform(pdfFile)
         }
-    }
-
-    File getFoFile() {
-        if (foFile == null) {
-            setFoFile(project.file("${outputDir}/${FilenameUtils.removeExtension(srcFile.getName())}.fo"))
-        }
-
-        return foFile
-    }
-
-    void setFoFile(File foFile) {
-        this.foFile = foFile
     }
 
     @TaskAction
@@ -85,7 +85,7 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
             outputFile.getParentFile().mkdirs()
         }
 
-        FopFactoryBuilder fopFactoryBuilder = new FopFactoryBuilder(outputDir.toURI())
+        FopFactoryBuilder fopFactoryBuilder = new FopFactoryBuilder(getFoFile().getParentFile().toURI())
         FopFactory fopFactory = fopFactoryBuilder.build()
 
         CatalogResolver resolver = createCatalogResolver()
@@ -103,5 +103,9 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
         SAXSource inFile = new SAXSource(reader, new InputSource(new FileInputStream(getFoFile())))
         SAXResult pdfFile = new SAXResult(fop.getDefaultHandler())
         t.transform(inFile, pdfFile)
+    }
+
+    private File getFoFile() {
+        return project.file("${outputDir}/${getFoFileName()}")
     }
 }
