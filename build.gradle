@@ -24,7 +24,8 @@ dependencies {
 	compile 'xml-resolver:xml-resolver:1.2'
 	compile 'org.apache.xmlgraphics:fop:2.1'
 	compile "net.sf.saxon:Saxon-HE:9.6.0-7"
-	compile 'com.xmlcalabash:xmlcalabash:1.1.9-96'
+	compile 'com.xmlcalabash:gradle:0.0.2'
+	runtime 'com.xmlcalabash:xmlcalabash:1.1.9-96'
 }
 
 group = "com.github.rwdalpe"
@@ -55,8 +56,6 @@ task getXsltAssets() {
 			ext.unpackDir.mkdirs()
 		}
 
-		ant.get(dest: zipSaveDir, src: "${libJingUrl}", skipexisting: true)
-		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libJingZip}", overwrite: false)
 		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
 		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsZip}", overwrite: false)
 		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
@@ -91,7 +90,7 @@ task preparePropertiesFile(type: Copy, dependsOn: [zipAssetsForJar]) {
 	into file("${xsltAssetsDir}/final").absolutePath
 	include "*.properties"
 	rename("sample-properties.properties", "docbook-build.properties")
-	filter(ReplaceTokens, tokens: createReplaceTokens(["libDocbookRpgExtensions", "libJing", "libXslt2Stylesheets", "libXslt2StylesheetsExtensions", "libXslt2StylesheetsRpgExtensions", "libXslt1StylesheetsRpgExtensions"]))
+	filter(ReplaceTokens, tokens: createReplaceTokens(["libDocbookRpgExtensions", "libXslt2Stylesheets", "libXslt2StylesheetsExtensions", "libXslt2StylesheetsRpgExtensions", "libXslt1StylesheetsRpgExtensions"]))
 }
 
 sourceSets {

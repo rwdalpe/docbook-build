@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	exclude-result-prefixes="t xsl m db tmpl f xs usrfn mp xlink h">
 
-	<xsl:import href="docbook-xslt2-2.0.20-rwdalpe/xslt/base/html/final-pass.xsl" />
+	<xsl:import href="docbook-xslt2-2.0.21-rwdalpe/xslt/base/html/final-pass.xsl" />
 	<xsl:import href="docbook-xslt2-rwdalpe-extension_rpg/html/all.xsl" />
 
 	<xsl:param name="use.extensions" select="'1'" />

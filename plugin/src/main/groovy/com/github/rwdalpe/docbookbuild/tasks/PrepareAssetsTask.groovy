@@ -10,11 +10,10 @@ public class PrepareAssetsTask extends DefaultTask {
     @TaskAction
     public void prepareAssets() {
         createAssetsDirectory()
-        unpackAssets()
+        unpackAssets("docbook-build-assets.zip")
     }
 
-    void unpackAssets() {
-        String assetsZipFileName = "docbook-build-assets.zip"
+    void unpackAssets(String assetsZipFileName) {
 
         InputStream is = getClass().getClassLoader().getResourceAsStream(assetsZipFileName)
 
