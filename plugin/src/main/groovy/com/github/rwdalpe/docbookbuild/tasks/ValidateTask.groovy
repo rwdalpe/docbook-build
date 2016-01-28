@@ -73,9 +73,6 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
 
         XMLCatalogResolver resolver = createXmlCatalogResolver()
 
-        System.setProperty('javax.xml.parsers.SAXParserFactory', 'org.apache.xerces.jaxp.SAXParserFactoryImpl')
-        System.setProperty('org.apache.xerces.xni.parser.XMLParserConfiguration', 'org.apache.xerces.parsers.XIncludeParserConfiguration')
-
         SchemaFactory sFactory = CompactSyntaxSchemaFactory.newInstance()
         Schema validatingSchema = sFactory.newSchema(initialRncFile)
 

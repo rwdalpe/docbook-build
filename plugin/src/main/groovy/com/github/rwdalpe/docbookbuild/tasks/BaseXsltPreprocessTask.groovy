@@ -19,22 +19,29 @@ public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
 
     BaseXsltPreprocessTask() {
         super()
-        outputDir = project.file("${workingDir}/${this.name}-working")
         stylesheetChain = new HashMap<>()
         suffix = ".preprocessed"
     }
 
+    public File getOutputDir() {
+        if (outputDir == null) {
+            outputDir = project.file("${workingDir}/${this.name}-working")
+        }
+
+        return outputDir
+    }
+
     @TaskAction
     public void preprocess() {
-        if (!outputDir.exists()) {
-            outputDir.mkdirs()
+        if (!getOutputDir().exists()) {
+            getOutputDir().mkdirs()
         }
 
         CatalogResolver resolver = createCatalogResolver()
         TransformerFactory tFactory = createTransformerFactory()
 
         for (File srcFile : srcFiles) {
-            File outFile = project.file("${outputDir}/${srcFile.getName()}${suffix}")
+            File outFile = project.file("${getOutputDir()}/${srcFile.getName()}${suffix}")
 
             boolean usePreprocessed = false
             for (File stylesheet : stylesheetChain.keySet()) {
