@@ -3,7 +3,8 @@ package com.github.rwdalpe.docbookbuild.tasks
 import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
 import org.gradle.api.file.FileCollection
 
-public class Xslt1PreprocessTask extends BaseXsltPreprocessTask {
+public class Xslt1PreprocessTask extends Xslt1StylesheetsTask {
+
     @Override
     protected String getMain() {
         return "com.icl.saxon.StyleSheet"

@@ -39,10 +39,6 @@ public abstract class BaseXsltTask extends DefaultTask {
     }
 
     protected void doTransform(String main, FileCollection classpath, Map<String, String> sysProps, List<String> args) {
-        println("main: ${main}")
-        println("classpath: ${classpath}")
-        println("props: ${sysProps}")
-        println("args: ${args}")
         project.javaexec {
             it.main = main
             it.classpath = classpath

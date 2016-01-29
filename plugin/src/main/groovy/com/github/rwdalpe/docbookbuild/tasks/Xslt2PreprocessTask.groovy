@@ -2,8 +2,10 @@ package com.github.rwdalpe.docbookbuild.tasks
 
 import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.TaskAction
 
-public class Xslt2PreprocessTask extends MultiSourceBaseXsltTask {
+public class Xslt2PreprocessTask extends SingleSourceBaseXsltTask {
+
     @Override
     protected String getMain() {
         return "net.sf.saxon.Transform"

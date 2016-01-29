@@ -16,7 +16,7 @@ import javax.xml.validation.Schema
 import javax.xml.validation.SchemaFactory
 import javax.xml.validation.Validator
 
-public class ValidateTask extends MultiSourceBaseXsltTask {
+public class ValidateTask extends SingleSourceBaseXsltTask {
     private final File validationDir
 
     File initialRncFile
@@ -31,10 +31,11 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
         return validationDir
     }
 
+    @Override
     @TaskAction
-    public void validate() {
+    public void transform() {
         File validationStylesheet = createSchematronValidationSheet()
-        validateFiles(srcFiles, validationStylesheet)
+        validateFiles(new HashSet<File>([srcFile]), validationStylesheet)
     }
 
     private void validateFiles(Set<File> toValidate, File validationStylesheet) {
@@ -53,14 +54,10 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
 
         toValidate.each { f ->
             def errorFile = new File("${getValidationDir().absolutePath}/${f.getName()}.schematronerrors".toString())
-            def outputStream = new BufferedOutputStream(new FileOutputStream(errorFile))
 
             t.transform(new StreamSource(f),
-                    new StreamResult(outputStream))
+                    new StreamResult(f))
             errorsFiles.add(errorFile)
-
-            outputStream.flush()
-            outputStream.close()
         }
 
         if (errorsFiles.any { it.length() > 0 }) {
@@ -110,17 +107,13 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
         def docbookSchematron = new File("${assetsDir}/docbook-5.0/sch/docbook.sch".toString())
         def finalValidationStylesheet = new File("${validationDir}/schematronValidation.xsl".toString())
 
-        def outputStream = new BufferedOutputStream(new FileOutputStream(finalValidationStylesheet))
-
         TransformerFactory tFactory = TransformerFactory.newInstance()
         tFactory.setURIResolver(createURIResolver())
         Transformer t = tFactory.newTransformer(new StreamSource(schematronCreationStylesheet))
         t.transform(new StreamSource(docbookSchematron),
-                new StreamResult(outputStream))
+                new StreamResult(finalValidationStylesheet))
         t.setURIResolver(createURIResolver())
 
-        outputStream.flush()
-        outputStream.close()
 
         return finalValidationStylesheet
     }
