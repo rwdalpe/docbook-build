@@ -1,6 +1,6 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
-import javax.xml.transform.TransformerFactory
+import org.gradle.api.tasks.TaskAction
 
 public abstract class Xslt1StylesheetsTask extends SingleSourceBaseXsltTask {
     protected final File baseStylesheetsDir
@@ -15,9 +15,18 @@ public abstract class Xslt1StylesheetsTask extends SingleSourceBaseXsltTask {
         baseStylesheetsDir = project.file("${assetsDir}/docbook-xsl-ns-1.78.1/")
     }
 
-    public abstract void transform()
+    @TaskAction
+    public void transform() {
+        if (!getOutputDir().exists()) {
+            getOutputDir().mkdirs()
+        }
 
-    protected TransformerFactory createTransformerFactory() {
-        return createXslt1TransformerFactory()
+        super.doTransform(getMain(),
+                getClasspath(),
+                getSysprops(),
+                getArgs(srcFile, getOutputFile(), initialStylesheet, params)
+        )
     }
+
+    protected abstract Optional<File> getOutputFile()
 }

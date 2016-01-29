@@ -1,20 +1,11 @@
 package com.github.rwdalpe.docbookbuild.tasks
+
+import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import net.lingala.zip4j.util.Zip4jConstants
 import org.apache.commons.io.FilenameUtils
-import org.apache.xml.resolver.tools.CatalogResolver
-import org.gradle.api.Action
-import org.gradle.api.file.CopySpec
-import org.gradle.api.tasks.TaskAction
-import org.xml.sax.InputSource
-import org.xml.sax.XMLReader
-
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.sax.SAXSource
-import javax.xml.transform.stream.StreamResult
-import javax.xml.transform.stream.StreamSource
+import org.gradle.api.file.FileCollection
 
 public class ToEpubTask extends Xslt1StylesheetsTask {
 
@@ -24,37 +15,6 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
         super()
         initialStylesheet = project.file("${baseStylesheetsDir}/epub3/chunk.xsl")
         outputDir = project.file("${workingDir}/docbook-build-epub/")
-    }
-
-    @Override
-    @TaskAction
-    void transform() {
-        if (!outputDir.exists()) {
-            outputDir.mkdirs()
-        }
-
-        CatalogResolver resolver = createCatalogResolver()
-        TransformerFactory tFactory = createTransformerFactory()
-        tFactory.setURIResolver(resolver)
-
-        XMLReader reader = createXmlReader()
-        reader.setEntityResolver(resolver)
-
-        Transformer t = tFactory.newTransformer(new StreamSource(initialStylesheet))
-        t.setURIResolver(resolver)
-
-        if (params != null) {
-            for (String param : params.keySet()) {
-                t.setParameter(param, params.get(param))
-            }
-
-
-            t.setParameter("base.dir", getBaseDir())
-        }
-
-        SAXSource inFile = new SAXSource(reader, new InputSource(new FileInputStream(srcFile)))
-
-        t.transform(inFile, new StreamResult(new StringWriter()))
     }
 
     public File getBaseDir() {
@@ -77,21 +37,85 @@ public class ToEpubTask extends Xslt1StylesheetsTask {
 
         this.doLast({
             File zipParent = zipFile.getParentFile()
-            if(!zipParent.exists()) {
+            if (!zipParent.exists()) {
                 zipParent.mkdirs()
             }
 
             ZipFile z = new ZipFile(zipFile)
             z.createZipFileFromFolder(owner.getBaseDir().getParentFile(),
-                    new ZipParameters() {{
-                        setIncludeRootFolder(false)
-                        setCompressionLevel(Zip4jConstants.COMP_DEFLATE)
-                        setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL)
-                    }},
+                    new ZipParameters() {
+                        {
+                            setIncludeRootFolder(false)
+                            setCompressionLevel(Zip4jConstants.COMP_DEFLATE)
+                            setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL)
+                        }
+                    },
                     false, 0)
         })
 
         return this
+    }
+
+    @Override
+    protected String getMain() {
+        return "com.icl.saxon.StyleSheet"
+    }
+
+    @Override
+    protected FileCollection getClasspath() {
+        FileCollection saxon = DocbookBuildPlugin.getClasspathForModule(project, "saxon")
+        FileCollection resolver = DocbookBuildPlugin.getClasspathForModule(project, "xml-resolver")
+        FileCollection xerces = DocbookBuildPlugin.getClasspathForModule(project, "xerces")
+
+        return saxon.plus(resolver).plus(xerces)
+    }
+
+    @Override
+    protected Map<String, String> getSysprops() {
+        return [
+                "javax.xml.parsers.SAXParserFactory"                 : "org.apache.xerces.jaxp.SAXParserFactoryImpl",
+                "org.apache.xerces.xni.parser.XMLParserConfiguration": "org.apache.xerces.parsers.XIncludeParserConfiguration",
+                "xml.catalog.files"                                  : catalogFiles.collect({
+                    it.absolutePath
+                }).join(";")
+        ]
+    }
+
+    @Override
+    protected List<String> getArgs(File srcFile, Optional<File> outFile, File stylesheet, Map<String, Object> params) {
+        def args = [
+                "-r",
+                "org.apache.xml.resolver.tools.CatalogResolver",
+                "-x",
+                "org.apache.xml.resolver.tools.ResolvingXMLReader",
+                "-y",
+                "org.apache.xml.resolver.tools.ResolvingXMLReader"
+        ]
+
+        if (outFile.isPresent()) {
+            args.push("-o")
+            args.push(outFile.get().absolutePath)
+        }
+
+        args.addAll([
+                srcFile.absolutePath,
+                stylesheet.absolutePath
+        ])
+
+        for (String param : params.keySet()) {
+            if(!param.equals("base.dir")) {
+                args.push("${param}=${params.get(param).toString()}")
+            }
+        }
+
+        args.push("base.dir=${getBaseDir().absolutePath}")
+
+        return args
+    }
+
+    @Override
+    protected Optional<File> getOutputFile() {
+        return Optional.empty()
     }
 
 }

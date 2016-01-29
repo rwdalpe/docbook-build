@@ -1,18 +1,15 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
 import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
-import org.apache.xerces.jaxp.SAXParserFactoryImpl
-import org.apache.xerces.util.XMLCatalogResolver
 import org.apache.xml.resolver.CatalogManager
 import org.apache.xml.resolver.tools.CatalogResolver
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.CopySpec
-import org.xml.sax.XMLReader
+import org.gradle.api.file.FileCollection
+import org.gradle.process.JavaExecSpec
 
-import javax.xml.parsers.SAXParser
-import javax.xml.parsers.SAXParserFactory
-import javax.xml.transform.TransformerFactory
+import javax.xml.transform.URIResolver
 
 public abstract class BaseXsltTask extends DefaultTask {
     protected final File assetsDir;
@@ -41,40 +38,33 @@ public abstract class BaseXsltTask extends DefaultTask {
         return this
     }
 
-    protected CatalogResolver createCatalogResolver() {
+    protected void doTransform(String main, FileCollection classpath, Map<String, String> sysProps, List<String> args) {
+        println("main: ${main}")
+        println("classpath: ${classpath}")
+        println("props: ${sysProps}")
+        println("args: ${args}")
+        project.javaexec {
+            it.main = main
+            it.classpath = classpath
+            it.systemProperties = sysProps
+            it.args = args
+        }
+    }
+
+    protected URIResolver createURIResolver() {
         CatalogManager manager = new CatalogManager()
-        manager.setCatalogFiles(catalogFiles.collect({it.absolutePath}).join(";"))
-        manager.setIgnoreMissingProperties(true)
-        manager.setRelativeCatalogs(true)
         manager.setUseStaticCatalog(false)
-
-        return new CatalogResolver(manager)
+        manager.setRelativeCatalogs(true)
+        manager.setCatalogFiles(catalogFiles.collect({ it.absolutePath }).join(";"))
+        URIResolver resolver = new CatalogResolver(manager)
+        return resolver
     }
 
-    protected XMLCatalogResolver createXmlCatalogResolver() {
-        return new XMLCatalogResolver((String[]) (catalogFiles.collect { it.absolutePath }))
-    }
+    protected abstract String getMain()
 
-    protected static TransformerFactory createXslt1TransformerFactory() {
-        return new com.icl.saxon.TransformerFactoryImpl()
-    }
+    protected abstract FileCollection getClasspath()
 
-    protected static TransformerFactory createXslt2TransformerFactory() {
-        return new net.sf.saxon.TransformerFactoryImpl()
-    }
+    protected abstract Map<String, String> getSysprops()
 
-    protected static SAXParserFactory createXmlParserFactory() {
-        return new SAXParserFactoryImpl()
-    }
-
-    protected static XMLReader createXmlReader(SAXParser parser) {
-        return parser.getXMLReader()
-    }
-
-    protected static XMLReader createXmlReader() {
-        return createXmlParserFactory()
-                .newSAXParser()
-                .getXMLReader()
-    }
-
+    protected abstract List<String> getArgs(File srcFile, Optional<File> outFile, File stylesheet, Map<String, Object> params)
 }

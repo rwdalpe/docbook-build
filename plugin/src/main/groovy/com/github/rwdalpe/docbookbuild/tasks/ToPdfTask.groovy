@@ -1,22 +1,22 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
+import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
 import groovy.transform.PackageScope
 import org.apache.commons.io.FilenameUtils
 import org.apache.fop.apps.Fop
 import org.apache.fop.apps.FopFactory
 import org.apache.fop.apps.FopFactoryBuilder
 import org.apache.fop.apps.MimeConstants
-import org.apache.xml.resolver.tools.CatalogResolver
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.file.FileCollection
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
 
+import javax.xml.parsers.SAXParserFactory
 import javax.xml.transform.Transformer
 import javax.xml.transform.TransformerFactory
+import javax.xml.transform.URIResolver
 import javax.xml.transform.sax.SAXResult
 import javax.xml.transform.sax.SAXSource
-import javax.xml.transform.stream.StreamResult
-import javax.xml.transform.stream.StreamSource
 
 public class ToPdfTask extends Xslt1StylesheetsTask {
 
@@ -28,7 +28,7 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
     }
 
     String getFoFileName() {
-        if(foFileName == null) {
+        if (foFileName == null) {
             foFileName = "${FilenameUtils.removeExtension(srcFile.getName())}.fo"
         }
         return foFileName
@@ -36,7 +36,7 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
 
     @Override
     File getOutputDir() {
-        if(super.getOutputDir() == null) {
+        if (super.getOutputDir() == null) {
             this.outputDir = project.file("${workingDir}/docbook-build-pdf/${FilenameUtils.removeExtension(srcFile.getName())}")
         }
 
@@ -49,51 +49,20 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
         }
     }
 
-    @TaskAction
-    @Override
-    void transform() {
-        if (!outputDir.exists()) {
-            outputDir.mkdirs()
-        }
-
-        if(!getFoFile().getParentFile().exists()) {
-            getFoFile().getParentFile().mkdirs()
-        }
-
-        CatalogResolver resolver = createCatalogResolver()
-        TransformerFactory tFactory = createTransformerFactory()
-        tFactory.setURIResolver(resolver)
-
-        XMLReader reader = createXmlReader()
-        reader.setEntityResolver(resolver)
-
-        Transformer t = tFactory.newTransformer(new StreamSource(initialStylesheet))
-        t.setURIResolver(resolver)
-
-        if (params != null) {
-            for (String param : params.keySet()) {
-                t.setParameter(param, params.get(param))
-            }
-        }
-
-        SAXSource inFile = new SAXSource(reader, new InputSource(new FileInputStream(srcFile)))
-        t.transform(inFile, new StreamResult(getFoFile()))
-    }
-
-    @PackageScope doPdfTransform(File outputFile) {
-        if(!outputFile.getParentFile().exists()) {
+    @PackageScope
+    doPdfTransform(File outputFile) {
+        if (!outputFile.getParentFile().exists()) {
             outputFile.getParentFile().mkdirs()
         }
 
         FopFactoryBuilder fopFactoryBuilder = new FopFactoryBuilder(getFoFile().getParentFile().toURI())
         FopFactory fopFactory = fopFactoryBuilder.build()
 
-        CatalogResolver resolver = createCatalogResolver()
-        TransformerFactory tFactory = createTransformerFactory()
+        URIResolver resolver = createURIResolver()
+        TransformerFactory tFactory = TransformerFactory.newInstance()
         tFactory.setURIResolver(resolver)
 
-        XMLReader reader = createXmlReader()
-        reader.setEntityResolver(resolver)
+        XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader()
 
         Transformer t = tFactory.newTransformer()
         t.setURIResolver(resolver)
@@ -103,6 +72,64 @@ public class ToPdfTask extends Xslt1StylesheetsTask {
         SAXSource inFile = new SAXSource(reader, new InputSource(new FileInputStream(getFoFile())))
         SAXResult pdfFile = new SAXResult(fop.getDefaultHandler())
         t.transform(inFile, pdfFile)
+    }
+
+    @Override
+    protected Optional<File> getOutputFile() {
+        return Optional.of(getFoFile())
+    }
+
+    @Override
+    protected String getMain() {
+        return "com.icl.saxon.StyleSheet"
+    }
+
+    @Override
+    protected FileCollection getClasspath() {
+        FileCollection saxon = DocbookBuildPlugin.getClasspathForModule(project, "saxon")
+        FileCollection resolver = DocbookBuildPlugin.getClasspathForModule(project, "xml-resolver")
+        FileCollection xerces = DocbookBuildPlugin.getClasspathForModule(project, "xerces")
+
+        return saxon.plus(resolver).plus(xerces)
+    }
+
+    @Override
+    protected Map<String, String> getSysprops() {
+        return [
+                "javax.xml.parsers.SAXParserFactory"                 : "org.apache.xerces.jaxp.SAXParserFactoryImpl",
+                "org.apache.xerces.xni.parser.XMLParserConfiguration": "org.apache.xerces.parsers.XIncludeParserConfiguration",
+                "xml.catalog.files"                                  : catalogFiles.collect({
+                    it.absolutePath
+                }).join(";")
+        ]
+    }
+
+    @Override
+    protected List<String> getArgs(File srcFile, Optional<File> outFile, File stylesheet, Map<String, Object> params) {
+        def args = [
+                "-r",
+                "org.apache.xml.resolver.tools.CatalogResolver",
+                "-x",
+                "org.apache.xml.resolver.tools.ResolvingXMLReader",
+                "-y",
+                "org.apache.xml.resolver.tools.ResolvingXMLReader"
+        ]
+
+        if (outFile.isPresent()) {
+            args.push("-o")
+            args.push(outFile.get().absolutePath)
+        }
+
+        args.addAll([
+                srcFile.absolutePath,
+                stylesheet.absolutePath
+        ])
+
+        for (String param : params.keySet()) {
+            args.push("${param}=${params.get(param).toString()}")
+        }
+
+        return args
     }
 
     private File getFoFile() {

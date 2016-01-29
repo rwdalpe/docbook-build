@@ -1,15 +1,6 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
-import org.apache.xml.resolver.tools.CatalogResolver
 import org.gradle.api.tasks.TaskAction
-import org.xml.sax.InputSource
-import org.xml.sax.XMLReader
-
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.sax.SAXSource
-import javax.xml.transform.stream.StreamResult
-import javax.xml.transform.stream.StreamSource
 
 public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
     File outputDir
@@ -37,9 +28,6 @@ public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
             getOutputDir().mkdirs()
         }
 
-        CatalogResolver resolver = createCatalogResolver()
-        TransformerFactory tFactory = createTransformerFactory()
-
         for (File srcFile : srcFiles) {
             File outFile = project.file("${getOutputDir()}/${srcFile.getName()}${suffix}")
 
@@ -47,35 +35,24 @@ public abstract class BaseXsltPreprocessTask extends MultiSourceBaseXsltTask {
             for (File stylesheet : stylesheetChain.keySet()) {
                 Map<String, Object> params = stylesheetChain.get(stylesheet)
 
-                XMLReader reader = createXmlReader()
-                reader.setEntityResolver(resolver)
+                File useFile = null
 
-                Transformer t = tFactory.newTransformer(new StreamSource(stylesheet))
-                t.setURIResolver(resolver)
-
-                if (params != null) {
-                    for (String param : params.keySet()) {
-                        t.setParameter(param, params.get(param))
-                    }
-                }
-
-                SAXSource inFile = null
-
-                if(usePreprocessed) {
-                    inFile = new SAXSource(reader, new InputSource(new FileInputStream(outFile)))
+                if (usePreprocessed) {
+                    useFile = outFile
                 } else {
-                    inFile = new SAXSource(reader, new InputSource(new FileInputStream(srcFile)))
+                    useFile = srcFile
                 }
 
-                t.transform(inFile, new StreamResult(outFile))
+                super.doTransform(getMain(),
+                        getClasspath(),
+                        getSysprops(),
+                        getArgs(srcFile, Optional.of(useFile), stylesheet, params)
+                )
             }
 
-            if(forEachSrc != null) {
+            if (forEachSrc != null) {
                 forEachSrc(srcFile, outFile)
             }
         }
     }
-
-    protected abstract TransformerFactory createTransformerFactory();
-
 }

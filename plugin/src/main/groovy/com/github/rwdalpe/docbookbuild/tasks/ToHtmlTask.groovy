@@ -98,27 +98,8 @@ extends XMLCalabashExec {
 //        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/")
         this.classpath(project.files("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*"))
 //        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*")
-        project.buildscript.configurations.classpath.resolvedConfiguration.firstLevelModuleDependencies.each({ dep ->
-            if (dep.moduleName.equals("docbook-build")) {
-                dep.children.each { child ->
-                    if (child.moduleName.equals("xmlcalabash")) {
-                        Set<String> forbiddenArtifactIdentifiers = ["saxon", "xml-apis", "xercesImpl", "isorelax:20030108"]
-                        def calabashClasspaths = []
-                        child.allModuleArtifacts.each { artifact ->
-                            if (!forbiddenArtifactIdentifiers.contains(artifact.getName())) {
-                                if (!forbiddenArtifactIdentifiers.contains("${artifact.getName()}:${artifact.getModuleVersion().getId().getVersion()}".toString())) {
-                                    calabashClasspaths.push(artifact.getFile())
-                                }
-                            }
-                        }
-                        calabashClasspaths = calabashClasspaths.reverse()
-                        this.classpath(project.files(calabashClasspaths))
-//                        classpathFiles.addAll(calabashClasspaths)
-                    }
 
-                }
-            }
-        })
+        this.classpath(DocbookBuildPlugin.getClasspathForModule(project, "xmlcalabash", ["saxon", "xml-apis", "xercesImpl", "isorelax:20030108"]))
 
         this.input("source", getInputFile().absolutePath)
         this.output("result", getOutputFile().absolutePath)

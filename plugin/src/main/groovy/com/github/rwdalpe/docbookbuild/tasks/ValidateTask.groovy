@@ -2,13 +2,14 @@ package com.github.rwdalpe.docbookbuild.tasks
 
 import com.thaiopensource.relaxng.jaxp.CompactSyntaxSchemaFactory
 import org.apache.xerces.util.XMLCatalogResolver
-import org.apache.xml.resolver.tools.CatalogResolver
+import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskExecutionException
 import org.xml.sax.SAXParseException
 
 import javax.xml.transform.Transformer
 import javax.xml.transform.TransformerFactory
+import javax.xml.transform.URIResolver
 import javax.xml.transform.stream.StreamResult
 import javax.xml.transform.stream.StreamSource
 import javax.xml.validation.Schema
@@ -42,9 +43,9 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
     }
 
     private void schematronValidateFiles(Set<File> toValidate, File schematronValidationStylesheet) {
-        CatalogResolver resolver = createCatalogResolver()
+        URIResolver resolver = createURIResolver()
 
-        TransformerFactory tFactory = createXslt1TransformerFactory()
+        TransformerFactory tFactory = TransformerFactory.newInstance()
         Transformer t = tFactory.newTransformer(new StreamSource(schematronValidationStylesheet))
         t.setURIResolver(resolver)
 
@@ -52,15 +53,20 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
 
         toValidate.each { f ->
             def errorFile = new File("${getValidationDir().absolutePath}/${f.getName()}.schematronerrors".toString())
+            def outputStream = new BufferedOutputStream(new FileOutputStream(errorFile))
+
             t.transform(new StreamSource(f),
-                    new StreamResult(errorFile))
+                    new StreamResult(outputStream))
             errorsFiles.add(errorFile)
+
+            outputStream.flush()
+            outputStream.close()
         }
 
-        if(errorsFiles.any {it.length() > 0}) {
+        if (errorsFiles.any { it.length() > 0 }) {
             println("Schematron errors:")
             errorsFiles.each { f ->
-                if(f.length() > 0) {
+                if (f.length() > 0) {
                     println("\nErrors in ${f}: ")
                     println(String.join("\n", f.readLines()))
                 }
@@ -71,7 +77,9 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
 
     private void rncValidateFiles(Set<File> toValidate) {
 
-        XMLCatalogResolver resolver = createXmlCatalogResolver()
+        XMLCatalogResolver resolver = new XMLCatalogResolver((String[]) (catalogFiles.collect({
+            it.absolutePath
+        }).toArray()))
 
         SchemaFactory sFactory = CompactSyntaxSchemaFactory.newInstance()
         Schema validatingSchema = sFactory.newSchema(initialRncFile)
@@ -102,11 +110,38 @@ public class ValidateTask extends MultiSourceBaseXsltTask {
         def docbookSchematron = new File("${assetsDir}/docbook-5.0/sch/docbook.sch".toString())
         def finalValidationStylesheet = new File("${validationDir}/schematronValidation.xsl".toString())
 
-        TransformerFactory tFactory = createXslt1TransformerFactory()
+        def outputStream = new BufferedOutputStream(new FileOutputStream(finalValidationStylesheet))
+
+        TransformerFactory tFactory = TransformerFactory.newInstance()
+        tFactory.setURIResolver(createURIResolver())
         Transformer t = tFactory.newTransformer(new StreamSource(schematronCreationStylesheet))
         t.transform(new StreamSource(docbookSchematron),
-                new StreamResult(finalValidationStylesheet))
+                new StreamResult(outputStream))
+        t.setURIResolver(createURIResolver())
+
+        outputStream.flush()
+        outputStream.close()
 
         return finalValidationStylesheet
+    }
+
+    @Override
+    protected String getMain() {
+        throw new IllegalStateException()
+    }
+
+    @Override
+    protected FileCollection getClasspath() {
+        throw new IllegalStateException()
+    }
+
+    @Override
+    protected Map<String, String> getSysprops() {
+        throw new IllegalStateException()
+    }
+
+    @Override
+    protected List<String> getArgs(File srcFile, Optional<File> outFile, File stylesheet, Map<String, Object> params) {
+        throw new IllegalStateException()
     }
 }
