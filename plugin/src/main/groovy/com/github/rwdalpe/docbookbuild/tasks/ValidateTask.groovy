@@ -56,7 +56,7 @@ public class ValidateTask extends SingleSourceBaseXsltTask {
             def errorFile = new File("${getValidationDir().absolutePath}/${f.getName()}.schematronerrors".toString())
 
             t.transform(new StreamSource(f),
-                    new StreamResult(f))
+                    new StreamResult(errorFile))
             errorsFiles.add(errorFile)
         }
 
