@@ -31,8 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<xsl:import href="docbook-xslt2-rwdalpe-extension_rpg/html/all.xsl" />
 
 	<xsl:param name="use.extensions" select="'1'" />
-	<xsl:param name="html.scripts" select="'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js jquery.slicknav.js menu.js rotate-images.js readability.js'" />
-	<xsl:param name="html.stylesheets" select="'slicknav.css commonhtmlstyle.css commonhtmlstyle-print.css singlehtmlstyle.css singlehtmlstyle-print.css'" />
+	<xsl:param name="html.scripts" select="''" />
+	<xsl:param name="html.stylesheets" select="'slicknav.css'" />
 	<xsl:param name="draft.watermark.image" select="'draft.png'" />
 	<xsl:param name="generate.meta.generator" select="'0'" />
 	<xsl:param name="docbook.css" select="''" />
@@ -61,18 +61,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<tocparam path="book" toc="1" title="1"/>
 	</xsl:param>
 
-	<xsl:template match="*" mode="m:head-content">
-		<meta xmlns="http://www.w3.org/1999/xhtml" name="viewport" content="initial-scale=1" />
-		<script>
-			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-		
-			ga('create', 'UA-66235339-1', 'auto');
-			ga('send', 'pageview');
-		
-		</script>
+	<xsl:template match="*" mode="m:javascript-body">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" type="text/javascript"></script>
+		<script src="jquery.slicknav.js" type="text/javascript"></script>
+		<script src="menu.js" type="text/javascript"></script>
+		<script src="rotate-images.js" type="text/javascript"></script>
+		<script src="readability.js" type="text/javascript"></script>
 	</xsl:template>
 
 	<xsl:template name="pi.dbtimestamp">
