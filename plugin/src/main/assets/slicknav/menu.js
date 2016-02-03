@@ -59,4 +59,24 @@ $(document).ready(function() {
 	if(widescreen) {
 		$(tocSelector).slicknav("open");
 	}
+
+    var navs = $(".slicknav_item");
+    var hiddenNavs = [];
+    $(".slicknav_nav").prepend("<fieldset><label for='search'>Search TOC:</label> <input name='search' type='text' class='search'/>")
+    $(".slicknav_nav").on('change', 'input.search', function(val) {
+        var hidden = hiddenNavs.pop();
+
+        while(hidden)
+            hidden.css('height', 'auto');
+            hidden = hiddenNavs.pop();
+        });
+
+        $.each(navs, function(nav) {
+            if(val.trim() !== "" && !nav.text().contains(val)) {
+                nav.css('height', '0');
+                hiddenNavs.push(nav);
+            }
+        });
+    });
+
 });
