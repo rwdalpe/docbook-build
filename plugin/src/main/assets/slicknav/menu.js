@@ -60,21 +60,31 @@ $(document).ready(function() {
 		$(tocSelector).slicknav("open");
 	}
 
-    var navs = $(".slicknav_item");
-    var hiddenNavs = [];
-    $(".slicknav_nav").prepend("<fieldset><label for='search'>Search TOC:</label> <input name='search' type='text' class='search'/>")
-    $(".slicknav_nav").on('change', 'input.search', function(val) {
-        var hidden = hiddenNavs.pop();
+    var navs = $(".slicknav_nav span a");
+    var navCache = [];
+    $.each(navs, function(index, nav) {
+      navCache.push({
+        item: nav,
+        parents: $(nav).parents(".slicknav_parent")
+      });
+    });
+    $(".slicknav_nav").prepend("<fieldset><label for='search'>Search TOC:</label> <input name='search' type='text' class='search'/> <button type='submit' value='Go'>Go</button>");
+    $(".slicknav_nav").on('change', 'input.search', function() {
+        var val = $(this).val();
+        var regexp = new RegExp(val, "i");
+        $(".found-it").removeClass("found-it")
 
-        while(hidden)
-            hidden.css('height', 'auto');
-            hidden = hiddenNavs.pop();
-        });
-
-        $.each(navs, function(nav) {
-            if(val.trim() !== "" && !nav.text().contains(val)) {
-                nav.css('height', '0');
-                hiddenNavs.push(nav);
+        $.each(navCache, function(index, nav) {
+            //debugger;
+            if(val.trim() !== "" && !nav.item.text.match(regexp)) {
+              if(nav.parents.length > 0 && nav.parents[0].className.indexOf("found-it") < 0) {
+                nav.parents[0].style.display = 'none';
+              }
+            } else {
+              $.each(nav.parents, function(index, parent) {
+                parent.style.display = '';
+                parent.className += " found-it";
+              });
             }
         });
     });
