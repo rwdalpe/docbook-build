@@ -61,6 +61,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		<tocparam path="book" toc="1" title="1"/>
 	</xsl:param>
 
+	<xsl:template match="*" mode="m:head-content">
+		<meta xmlns="http://www.w3.org/1999/xhtml" name="viewport" content="initial-scale=1" />
+	</xsl:template>
+
 	<xsl:template match="*" mode="m:javascript-body">
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" type="text/javascript"></script>
 		<script src="jquery.slicknav.js" type="text/javascript"></script>
