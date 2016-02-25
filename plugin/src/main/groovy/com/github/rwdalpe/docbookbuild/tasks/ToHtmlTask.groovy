@@ -115,10 +115,6 @@ extends XMLCalabashExec {
 //            "xml.catalog.files": catalogFiles.collect({ it.absolutePath }).join(";")
 //        ]
 
-        if (!pipelineOptions.containsKey("preprocess-params-file")) {
-            pipelineOptions.put("preprocess-params-file", project.file("${baseStylesheetsDir}/xslt/base/preprocess/preprocess-defaultparams.xsl"))
-        }
-
 //        def options = []
 //        def params = []
 
