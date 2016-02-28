@@ -42,6 +42,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<l:i18n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0"> 
 		<l:l10n language="en"> 
 		<l:gentext key="reach" text="Reach"/>
+			<l:gentext key="specialattacks" text="Special Attacks"/>
+			<l:gentext key="SpecialAttacks" text="Special Attacks"/>
 			<l:gentext key="Reach" text="Reach"/>
 			<l:gentext key="space" text="Space"/>
 			<l:gentext key="Space" text="Space"/>

@@ -37,6 +37,8 @@
 	<xsl:param name="local.l10n.xml" select="document('')" />
 	<l:i18n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">
 		<l:l10n language="en">
+			<l:gentext key="specialattacks" text="Special Attacks"/>
+			<l:gentext key="SpecialAttacks" text="Special Attacks"/>
 			<l:gentext key="reach" text="Reach" />
 			<l:gentext key="Reach" text="Reach" />
 			<l:gentext key="space" text="Space" />
