@@ -307,6 +307,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	
 	<xsl:template name="t:user-localization-data">
 		<l:l10n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0" language="en" english-language-name="English">
+			<l:gentext key="spellsprepped" text="Spells Prepared"/>
+			<l:gentext key="SpellsPrepped" text="Spells Prepared"/>
+			<l:gentext key="concentration" text="concentration"/>
+			<l:gentext key="Concentration" text="concentration"/>
+			<l:gentext key="casterlevel" text="CL"/>
+			<l:gentext key="CasterLevel" text="CL"/>
+			<l:gentext key="slas" text="Spell-Like Abilities"/>
+			<l:gentext key="Slas" text="Spell-Like Abilities"/>
 			<l:gentext key="specialattacks" text="Special Attacks"/>
 			<l:gentext key="SpecialAttacks" text="Special Attacks"/>
 			<l:gentext key="reach" text="Reach"/>
