@@ -307,6 +307,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	
 	<xsl:template name="t:user-localization-data">
 		<l:l10n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0" language="en" english-language-name="English">
+			<l:gentext key="cmd" text="CMD"/>
+			<l:gentext key="CMD" text="CMD"/>
+			<l:gentext key="cmb" text="CMB"/>
+			<l:gentext key="CMB" text="CMB"/>
+			<l:gentext key="bab" text="Base Atk"/>
+			<l:gentext key="BAB" text="Base Atk"/>
+			<l:gentext key="statistics" text="Statistics"/>
+			<l:gentext key="Statistics" text="Statistics"/>
 			<l:gentext key="spellsprepped" text="Spells Prepared"/>
 			<l:gentext key="SpellsPrepped" text="Spells Prepared"/>
 			<l:gentext key="concentration" text="concentration"/>
