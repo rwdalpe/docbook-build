@@ -1,3 +1,20 @@
+/*
+	Copyright (C) 2016 Robert Winslow Dalpe
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>
+*/
+
 package com.github.rwdalpe.docbookbuild.tasks
 
 import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
@@ -9,12 +26,9 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaExecSpec
 
-public class ToHtmlTask
-//        extends DefaultTask {
-extends XMLCalabashExec {
+public class ToHtmlTask extends XMLCalabashExec {
     public enum HtmlMode {
         SINGLE
-        //, CHUNKED
     }
 
     private
@@ -35,7 +49,6 @@ extends XMLCalabashExec {
         pipelineOptions = new HashMap<>()
         stylesheetParams = new HashMap<>()
         initialPipeline = project.file("${baseStylesheetsDir}/xslt/base/pipelines/db2html.xpl")
-//        println(this.getClasspath().collect({ it.absolutePath }))
     }
 
     File getOutputFile() {
@@ -81,7 +94,6 @@ extends XMLCalabashExec {
         return this
     }
 
-    //@Override
     @TaskAction
     void exec() {
         if (!getOutputFile().getParentFile().exists()) {
@@ -92,62 +104,26 @@ extends XMLCalabashExec {
             getOutputDir().mkdirs()
         }
 
-//        def classpathFiles = []
-
         this.setClasspath(project.files("${DocbookBuildPlugin.getAssetsDir(project)}/"))
-//        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/")
         this.classpath(project.files("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*"))
-//        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*")
 
         this.classpath(DocbookBuildPlugin.getClasspathForModule(project, "xmlcalabash", ["saxon", "xml-apis", "xercesImpl", "isorelax:20030108"]))
 
         this.input("source", getInputFile().absolutePath)
         this.output("result", getOutputFile().absolutePath)
         this.setPipeline(initialPipeline.absolutePath)
-//        this.setEntityResolver("org.xmlresolver.Resolver")
-//        this.setUriResolver("org.xmlresolver.Resolver")
 
         this.setSystemProperties([
                 "xml.catalog.files": catalogFiles.collect({ it.absolutePath }).join(";")
         ])
 
-//        def sysProps = [
-//            "xml.catalog.files": catalogFiles.collect({ it.absolutePath }).join(";")
-//        ]
-
-//        def options = []
-//        def params = []
-
         for (String option : pipelineOptions.keySet()) {
             this.option(option, pipelineOptions.get(option).toString())
-//            options.push("${option}=${pipelineOptions.get(option).toString()}")
         }
 
         for (String param : stylesheetParams.keySet()) {
             this.param(param, stylesheetParams.get(param).toString())
-//            params.push("-p${param}=${stylesheetParams.get(param).toString()}")
         }
-
-//        def args = [
-//                "--entity-resolver=org.xmlresolver.Resolver",
-//                "--uri-resolver=org.xmlresolver.Resolver",
-//                "-oresult=${getOutputFile().absolutePath}",
-//                "-isource=${getInputFile().absolutePath}",
-//        ]
-//
-//        args.addAll(params)
-//        args.push(getInitialPipeline().absolutePath)
-//        args.addAll(options)
-//
-//        project.javaexec(new Action<JavaExecSpec>() {
-//            @Override
-//            void execute(JavaExecSpec javaExecSpec) {
-//                javaExecSpec.setClasspath(project.files(classpathFiles))
-//                javaExecSpec.setMain("com.xmlcalabash.drivers.Main")
-//                javaExecSpec.setSystemProperties(sysProps)
-//                javaExecSpec.setArgs(args)
-//            }
-//        })
 
         super.exec()
     }
