@@ -18,7 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns:t="http://docbook.org/xslt/ns/template" version="2.0"
 	xmlns:m="http://docbook.org/xslt/ns/mode" xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:db="http://docbook.org/ns/docbook" xmlns:tmpl="http://docbook.org/xslt/titlepage-templates"
+	xmlns:db="http://docbook.org/ns/docbook"
+	xmlns:rpg="http://docbook.org/ns/docbook"
+	xmlns:tmpl="http://docbook.org/xslt/titlepage-templates"
 	xmlns:f="http://docbook.org/xslt/ns/extension" xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:xlink='http://www.w3.org/1999/xlink'
 	xmlns:mp="http://docbook.org/xslt/ns/mode/private"
@@ -296,6 +298,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	</xsl:template>
 	
 	<xsl:template match="db:tip" mode="m:get-titlepage-templates" as="element(tmpl:templates)">
+		<tmpl:templates>
+			<tmpl:titlepage>
+				<header>
+					<db:title/>
+				</header>
+			</tmpl:titlepage>
+		</tmpl:templates>
+	</xsl:template>
+
+	<xsl:template match="rpg:statblocksection" mode="m:get-titlepage-templates" as="element(tmpl:templates)">
 		<tmpl:templates>
 			<tmpl:titlepage>
 				<header>
