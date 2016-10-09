@@ -39,7 +39,7 @@ dependencies {
 	compile 'com.thaiopensource:jing:20091111'
 	compile 'xml-resolver:xml-resolver:1.2'
 	compile 'org.apache.xmlgraphics:fop:2.1'
-	runtime "net.sf.saxon:Saxon-HE:9.6.0-7"
+	runtime "net.sf.saxon:Saxon-HE:9.6.0-4"
 	runtime "saxon:saxon:6.5.3"
 	runtime 'com.xmlcalabash:xmlcalabash:1.1.12-96'
 	runtime 'xerces:xerces:2.4.0'
