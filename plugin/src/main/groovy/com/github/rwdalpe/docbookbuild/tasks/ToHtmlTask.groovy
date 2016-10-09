@@ -18,7 +18,6 @@
 package com.github.rwdalpe.docbookbuild.tasks
 
 import com.github.rwdalpe.docbookbuild.DocbookBuildPlugin
-import com.xmlcalabash.XMLCalabashExec
 import org.apache.commons.io.FilenameUtils
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
@@ -26,7 +25,7 @@ import org.gradle.api.file.CopySpec
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.JavaExecSpec
 
-public class ToHtmlTask extends XMLCalabashExec {
+public class ToHtmlTask extends DefaultTask {
     public enum HtmlMode {
         SINGLE
     }
@@ -104,27 +103,47 @@ public class ToHtmlTask extends XMLCalabashExec {
             getOutputDir().mkdirs()
         }
 
-        this.setClasspath(project.files("${DocbookBuildPlugin.getAssetsDir(project)}/"))
-        this.classpath(project.files("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*"))
+        def classpathFiles = []
 
-        this.classpath(DocbookBuildPlugin.getClasspathForModule(project, "xmlcalabash", ["saxon", "xml-apis", "xercesImpl", "isorelax:20030108"]))
+        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/")
+        classpathFiles.push("${DocbookBuildPlugin.getAssetsDir(project)}/${DocbookBuildPlugin.pluginProperties.getProperty("libXslt2StylesheetsExtensions")}/*")
 
-        this.input("source", getInputFile().absolutePath)
-        this.output("result", getOutputFile().absolutePath)
-        this.setPipeline(initialPipeline.absolutePath)
+        def sysProps = [
+            "xml.catalog.files": catalogFiles.collect({ it.absolutePath }).join(";")
+        ]
 
-        this.setSystemProperties([
-                "xml.catalog.files": catalogFiles.collect({ it.absolutePath }).join(";")
-        ])
+        def options = []
+        def params = []
 
         for (String option : pipelineOptions.keySet()) {
-            this.option(option, pipelineOptions.get(option).toString())
+            options.push("${option}=${pipelineOptions.get(option).toString()}")
         }
 
         for (String param : stylesheetParams.keySet()) {
-            this.param(param, stylesheetParams.get(param).toString())
+            params.push("-p${param}=${stylesheetParams.get(param).toString()}")
         }
 
-        super.exec()
+        def args = [
+                "--entity-resolver=org.xmlresolver.Resolver",
+                "--uri-resolver=org.xmlresolver.Resolver",
+                "-oresult=${getOutputFile().absolutePath}",
+                "-isource=${getInputFile().absolutePath}",
+        ]
+
+        args.addAll(params)
+        args.push(getInitialPipeline().absolutePath)
+        args.addAll(options)
+
+        def execClassPath = DocbookBuildPlugin.getClasspathForModule(project, "xmlcalabash").plus(project.files(classpathFiles))
+
+        project.javaexec(new Action<JavaExecSpec>() {
+            @Override
+            void execute(JavaExecSpec javaExecSpec) {
+                javaExecSpec.setClasspath(project.files(execClassPath))
+                javaExecSpec.setMain("com.xmlcalabash.drivers.Main")
+                javaExecSpec.setSystemProperties(sysProps)
+                javaExecSpec.setArgs(args)
+            }
+        })
     }
 }
