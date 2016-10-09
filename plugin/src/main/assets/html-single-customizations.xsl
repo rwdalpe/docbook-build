@@ -319,6 +319,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	
 	<xsl:template name="t:user-localization-data">
 		<l:l10n xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0" language="en" english-language-name="English">
+			<l:gentext key="specialqualities" text="SQ" />
+			<l:gentext key="SpecialQualities" text="SQ" />
+			<l:gentext key="creaturelanguages" text="Languages"/>
+			<l:gentext key="CreatureLanguages" text="Languages"/>
 			<l:gentext key="creatureskills" text="Skills"/>
 			<l:gentext key="CreatureSkills" text="Skills"/>
 			<l:gentext key="creaturefeats" text="Feats"/>
