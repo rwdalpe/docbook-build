@@ -223,5 +223,89 @@
 </div>
 </xsl:template>
 
+<xsl:template name="statblocksection.titlepage.recto">
+  <xsl:choose>
+    <xsl:when test="d:statblocksectioninfo/d:title">
+      <xsl:apply-templates mode="statblocksection.titlepage.recto.auto.mode" select="d:statblocksectioninfo/d:title"/>
+    </xsl:when>
+    <xsl:when test="d:docinfo/d:title">
+      <xsl:apply-templates mode="statblocksection.titlepage.recto.auto.mode" select="d:docinfo/d:title"/>
+    </xsl:when>
+    <xsl:when test="d:info/d:title">
+      <xsl:apply-templates mode="statblocksection.titlepage.recto.auto.mode" select="d:info/d:title"/>
+    </xsl:when>
+    <xsl:when test="d:title">
+      <xsl:apply-templates mode="statblocksection.titlepage.recto.auto.mode" select="d:title"/>
+    </xsl:when>
+  </xsl:choose>
+
+</xsl:template>
+
+<xsl:template name="statblocksection.titlepage.verso">
+</xsl:template>
+
+<xsl:template name="statblocksection.titlepage.separator">
+</xsl:template>
+
+<xsl:template name="statblocksection.titlepage.before.recto">
+</xsl:template>
+
+<xsl:template name="statblocksection.titlepage.before.verso">
+</xsl:template>
+
+<xsl:template name="statblocksection.titlepage">
+  <div xmlns="http://www.w3.org/1999/xhtml" class="titlepage">
+    <xsl:variable name="recto.content">
+      <xsl:call-template name="statblocksection.titlepage.before.recto"/>
+      <xsl:call-template name="statblocksection.titlepage.recto"/>
+    </xsl:variable>
+    <xsl:variable name="recto.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($recto.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($recto.content) != '') or ($recto.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$recto.content"/></div>
+    </xsl:if>
+    <xsl:variable name="verso.content">
+      <xsl:call-template name="statblocksection.titlepage.before.verso"/>
+      <xsl:call-template name="statblocksection.titlepage.verso"/>
+    </xsl:variable>
+    <xsl:variable name="verso.elements.count">
+      <xsl:choose>
+        <xsl:when test="function-available('exsl:node-set')"><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:when test="contains(system-property('xsl:vendor'), 'Apache Software Foundation')">
+          <!--Xalan quirk--><xsl:value-of select="count(exsl:node-set($verso.content)/*)"/></xsl:when>
+        <xsl:otherwise>1</xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:if test="(normalize-space($verso.content) != '') or ($verso.elements.count &gt; 0)">
+      <div><xsl:copy-of select="$verso.content"/></div>
+    </xsl:if>
+    <xsl:call-template name="statblocksection.titlepage.separator"/>
+  </div>
+</xsl:template>
+
+<xsl:template match="*" mode="statblocksection.titlepage.recto.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="*" mode="statblocksection.titlepage.verso.mode">
+  <!-- if an element isn't found in this mode, -->
+  <!-- try the generic titlepage.mode -->
+  <xsl:apply-templates select="." mode="titlepage.mode"/>
+</xsl:template>
+
+<xsl:template match="d:title" mode="statblocksection.titlepage.recto.auto.mode">
+<div xmlns="http://www.w3.org/1999/xhtml" xsl:use-attribute-sets="statblocksection.titlepage.recto.style">
+<xsl:apply-templates select="." mode="statblocksection.titlepage.recto.mode"/>
+</div>
+</xsl:template>
+
 </xsl:stylesheet>
 
