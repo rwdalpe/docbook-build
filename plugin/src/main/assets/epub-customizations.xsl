@@ -29,6 +29,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	<xsl:import href="epub-titlepage.xsl" />
 	<xsl:import href="docbook-xslt1-rwdalpe-extension_rpg/epub3/all.xsl" />
 
+	<xsl:attribute-set name="statblocksection.titlepage.recto.style"/>
+	<xsl:attribute-set name="statblocksection.titlepage.verso.style"/>
+
 	<xsl:param name="chapter.autolabel" select="0" />
 	<xsl:param name="chunk.section.depth" select="3" />
 	<xsl:param name="chunk.first.sections" select="1" />
