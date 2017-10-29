@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "Entering docbook-build directory"
+cd xmlcalabash1-gradle
+
+echo "Starting clean build"
+./gradlew clean build uploadArchives
+
+echo "Complete"
