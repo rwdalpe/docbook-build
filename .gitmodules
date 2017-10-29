@@ -1,0 +1,3 @@
+[submodule "xmlcalabash1-gradle"]
+	path = xmlcalabash1-gradle
+	url = https://github.com/rwdalpe/xmlcalabash1-gradle
