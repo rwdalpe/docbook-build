@@ -17,6 +17,8 @@
 
 import org.apache.tools.ant.filters.ReplaceTokens
 
+import java.nio.file.Paths
+
 repositories {
 	mavenCentral()
 	maven { url "https://maven.restlet.com/" }
@@ -60,9 +62,42 @@ def createReplaceTokens = { tokens ->
 	}
 }
 
+class XsltAsset {
+	private final String version
+	private final URL downloadUrl
+
+	XsltAsset(String version, String downloadUrl) {
+		this.downloadUrl = new URL(downloadUrl)
+		this.version = version
+	}
+
+	 String getAssetFilename() {
+		 return file(assetUrl.getPath()).getName()
+	}
+
+	String getAssetFoldername() {
+		String fn = getAssetFilename();
+		return fn.take(fn.lastIndexOf('.'))
+	}
+}
+
+def xsltAssets = [
+	new XsltAsset(
+        dbRpgExtVer,
+        "https://github.com/rwdalpe/docbook-5.0-extension_rwdalpe-rpg/releases/download/V${dbRpgExtVer}/docbook-5.0-extension_rwdalpe-rpg_${dbRpgExtVer}.zip"),
+    new XsltAsset(
+        dbXslt2Ver,
+        "https://github.com/rwdalpe/xslt20-stylesheets/releases/download/V${dbXslt2Ver}-rwdalpe/docbook-xslt2-${dbXslt2Ver}-rwdalpe.zip"),
+    new XsltAsset(
+        dbXslt2RpgExtVer,
+        "https://github.com/rwdalpe/docbook-xslt2-rwdalpe-extension_rpg/releases/download/V${dbXslt2RpgExtVer}/docbook-xslt2-rwdalpe-extension_rpg_${dbXslt2RpgExtVer}.zip"),
+    new XsltAsset(
+        dbXslt1RpgExtVer,
+        "https://github.com/rwdalpe/docbook-xslt1-rwdalpe-extension_rpg/releases/download/V${dbXslt1RpgExtVer}/docbook-xslt1-rwdalpe-extension_rpg_${dbXslt1RpgExtVer}.zip")
+]
+
 task getXsltAssets() {
-	ext.lib = xsltAssetsDir
-	ext.unpackDir = file("${ext.lib}/assets")
+	def unpackDir = file("${xsltAssetsDir}/assets")
 	def zipSaveDir = file("${buildDir}/xslt-assets-zips")
 
 	doFirst {
@@ -70,11 +105,22 @@ task getXsltAssets() {
 			zipSaveDir.mkdirs()
 		}
 
-		if (!ext.lib.exists()) {
-			ext.lib.mkdirs()
-			ext.unpackDir.mkdirs()
+		if (!unpackDir.exists()) {
+            unpackDir.mkdirs()
 		}
 
+        for (asset in xsltAssets) {
+            def assetUnpackDir = file(Paths.get(unpackDir.getAbsolutePath(), "${asset.getAssetFoldername()}_unpack"))
+
+            ant.get(dest: zipSaveDir, src: assetUrl, skipexisting: true)
+            ant.unzip(dest: assetUnpackDir, src: Paths.get(zipSaveDir.getAbsolutePath(), asset.getAssetFilename()), overwrite: false)
+
+			def assetChildFiles = fileTree(assetUnpackDir).exclude(".*").getFiles()
+			if(assetChildFiles.size() == 1) {
+
+            }
+        }
+        
 		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
 		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsZip}", overwrite: false)
 		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
