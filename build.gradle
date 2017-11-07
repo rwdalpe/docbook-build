@@ -63,22 +63,26 @@ def createReplaceTokens = { tokens ->
 }
 
 class XsltAsset {
-	private final String version
-	private final URL downloadUrl
+    private final String version
+    private final URL downloadUrl
 
-	XsltAsset(String version, String downloadUrl) {
-		this.downloadUrl = new URL(downloadUrl)
-		this.version = version
-	}
+    XsltAsset(String version, String downloadUrl) {
+        this.downloadUrl = new URL(downloadUrl)
+        this.version = version
+    }
 
-	 String getAssetFilename() {
-		 return file(assetUrl.getPath()).getName()
-	}
+    String getAssetFilename() {
+        return new File(downloadUrl.getPath()).getName()
+    }
 
-	String getAssetFoldername() {
-		String fn = getAssetFilename();
-		return fn.take(fn.lastIndexOf('.'))
-	}
+    String getAssetFoldername() {
+        String fn = getAssetFilename();
+        return fn.take(fn.lastIndexOf('.'))
+    }
+
+    URL getDownloadUrl() {
+        return downloadUrl
+    }
 }
 
 def xsltAssets = [
@@ -97,41 +101,40 @@ def xsltAssets = [
 ]
 
 task getXsltAssets() {
-	def unpackDir = file("${xsltAssetsDir}/assets")
-	def zipSaveDir = file("${buildDir}/xslt-assets-zips")
+    ext.unpackDir = file("${xsltAssetsDir}/assets")
+    def zipSaveDir = file("${buildDir}/xslt-assets-zips")
 
-	doFirst {
-		if (!zipSaveDir.exists()) {
-			zipSaveDir.mkdirs()
-		}
+    doLast {
+        if (!zipSaveDir.exists()) {
+            zipSaveDir.mkdirs()
+        }
 
-		if (!unpackDir.exists()) {
+        if (!unpackDir.exists()) {
             unpackDir.mkdirs()
-		}
+        }
 
         for (asset in xsltAssets) {
             def assetUnpackDir = file(Paths.get(unpackDir.getAbsolutePath(), "${asset.getAssetFoldername()}_unpack"))
 
-            ant.get(dest: zipSaveDir, src: assetUrl, skipexisting: true)
+            ant.get(dest: zipSaveDir, src: asset.getDownloadUrl().toString(), skipexisting: true)
             ant.unzip(dest: assetUnpackDir, src: Paths.get(zipSaveDir.getAbsolutePath(), asset.getAssetFilename()), overwrite: false)
 
-			def assetChildFiles = fileTree(assetUnpackDir).exclude(".*").getFiles()
-			if(assetChildFiles.size() == 1) {
+            def assetChildFiles = assetUnpackDir.list()
+            def destPath = Paths.get(unpackDir.getAbsolutePath(), asset.getAssetFoldername())
+            def srcPath = assetUnpackDir
 
+            if (assetChildFiles.size() == 1 && assetChildFiles[0] == asset.getAssetFoldername()) {
+                srcPath = Paths.get(assetUnpackDir.getAbsolutePath(), assetChildFiles[0])
             }
+
+            delete(destPath)
+            copy {
+                from(srcPath)
+                into(destPath)
+            }
+            delete(assetUnpackDir)
         }
-        
-		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsUrl}", skipexisting: true)
-		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsZip}", overwrite: false)
-		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: ext.unpackDir, src: "${zipSaveDir}/${libXslt2StylesheetsExtensionsZip}", overwrite: false)
-		ant.get(dest: zipSaveDir, src: "${libDocbookRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${ext.unpackDir}/${libDocbookRpgExtensions}", src: "${zipSaveDir}/${libDocbookRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: zipSaveDir, src: "${libXslt2StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${ext.unpackDir}/${libXslt2StylesheetsRpgExtensions}", src: "${zipSaveDir}/${libXslt2StylesheetsRpgExtensionsZip}", overwrite: false)
-		ant.get(dest: zipSaveDir, src: "${libXslt1StylesheetsRpgExtensionsUrl}", skipexisting: true)
-		ant.unzip(dest: "${ext.unpackDir}/${libXslt1StylesheetsRpgExtensions}", src: "${zipSaveDir}/${libXslt1StylesheetsRpgExtensionsZip}", overwrite: false)
-	}
+    }
 }
 
 task zipAssetsForArtifact(type: Zip, dependsOn: [getXsltAssets]) {
