@@ -54,11 +54,9 @@ version = "0.0.1"
 libsDirName = "dist"
 def xsltAssetsDir = file("${buildDir}/xslt-assets")
 
-def createReplaceTokens = { tokens ->
-	def projectProps = project.getProperties()
-	return tokens.collectEntries { token ->
-		def tokenValue = projectProps.get(token)
-		return [token, ("${token}=${tokenValue}").toString()]
+def createReplaceTokens = { Map<String, XsltAsset> tokens ->
+	return tokens.collectEntries { assets ->
+		return [assets.key, ("${assets.key}=${assets.value.getAssetFoldername()}").toString()]
 	}
 }
 
@@ -86,16 +84,16 @@ class XsltAsset {
 }
 
 def xsltAssets = [
-	new XsltAsset(
+    'libDocbookRpgExtensions': new XsltAsset(
         dbRpgExtVer,
         "https://github.com/rwdalpe/docbook-5.0-extension_rwdalpe-rpg/releases/download/V${dbRpgExtVer}/docbook-5.0-extension_rwdalpe-rpg_${dbRpgExtVer}.zip"),
-    new XsltAsset(
+    'libXslt2Stylesheets': new XsltAsset(
         dbXslt2Ver,
         "https://github.com/rwdalpe/xslt20-stylesheets/releases/download/V${dbXslt2Ver}-rwdalpe/docbook-xslt2-${dbXslt2Ver}-rwdalpe.zip"),
-    new XsltAsset(
+    'libXslt2StylesheetsRpgExtensions': new XsltAsset(
         dbXslt2RpgExtVer,
         "https://github.com/rwdalpe/docbook-xslt2-rwdalpe-extension_rpg/releases/download/V${dbXslt2RpgExtVer}/docbook-xslt2-rwdalpe-extension_rpg_${dbXslt2RpgExtVer}.zip"),
-    new XsltAsset(
+    'libXslt1StylesheetsRpgExtensions': new XsltAsset(
         dbXslt1RpgExtVer,
         "https://github.com/rwdalpe/docbook-xslt1-rwdalpe-extension_rpg/releases/download/V${dbXslt1RpgExtVer}/docbook-xslt1-rwdalpe-extension_rpg_${dbXslt1RpgExtVer}.zip")
 ]
@@ -113,7 +111,7 @@ task getXsltAssets() {
             unpackDir.mkdirs()
         }
 
-        for (asset in xsltAssets) {
+        for (asset in xsltAssets.values()) {
             def assetUnpackDir = file(Paths.get(unpackDir.getAbsolutePath(), "${asset.getAssetFoldername()}_unpack"))
 
             ant.get(dest: zipSaveDir, src: asset.getDownloadUrl().toString(), skipexisting: true)
@@ -158,7 +156,7 @@ task preparePropertiesFile(type: Copy, dependsOn: [zipAssetsForJar]) {
 	into file("${xsltAssetsDir}/final").absolutePath
 	include "*.properties"
 	rename("sample-properties.properties", "docbook-build.properties")
-	filter(ReplaceTokens, tokens: createReplaceTokens(["libDocbookRpgExtensions", "libXslt2Stylesheets", "libXslt2StylesheetsExtensions", "libXslt2StylesheetsRpgExtensions", "libXslt1StylesheetsRpgExtensions"]))
+	filter(ReplaceTokens, tokens: createReplaceTokens(xsltAssets))
 }
 
 sourceSets {
