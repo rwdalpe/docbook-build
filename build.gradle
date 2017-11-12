@@ -93,6 +93,9 @@ def xsltAssets = [
     'libXslt2StylesheetsRpgExtensions': new XsltAsset(
         dbXslt2RpgExtVer,
         "https://github.com/rwdalpe/docbook-xslt2-rwdalpe-extension_rpg/releases/download/V${dbXslt2RpgExtVer}/docbook-xslt2-rwdalpe-extension_rpg_${dbXslt2RpgExtVer}.zip"),
+    'libXslt1Stylesheets': new XsltAsset(
+        dbXslt1Ver,
+        "https://github.com/docbook/xslt10-stylesheets/releases/download/release%2F${dbXslt1Ver}/docbook-xsl-${dbXslt1Ver}.zip"),
     'libXslt1StylesheetsRpgExtensions': new XsltAsset(
         dbXslt1RpgExtVer,
         "https://github.com/rwdalpe/docbook-xslt1-rwdalpe-extension_rpg/releases/download/V${dbXslt1RpgExtVer}/docbook-xslt1-rwdalpe-extension_rpg_${dbXslt1RpgExtVer}.zip")
